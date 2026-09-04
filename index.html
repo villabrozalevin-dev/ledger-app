@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ledger — Wallet &amp; Loans</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#a8791f">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<script type="application/json" id="loan-data">[]</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root{
+    --bg-0:#0b0805;
+    --bg-1:#120d08;
+    --text:#f5f1ea;
+    --text-dim:rgba(245,241,234,0.62);
+    --text-faint:rgba(245,241,234,0.38);
+
+    --glass:rgba(255,255,255,0.055);
+    --glass-strong:rgba(255,255,255,0.10);
+    --glass-press:rgba(255,255,255,0.16);
+    --hairline:rgba(255,255,255,0.09);
+    --edge:rgba(255,255,255,0.16);
+    --edge-hi:rgba(255,255,255,0.55);
+
+    --accent:#e3b34d;
+    --accent-strong:#f0c766;
+    --accent-rgb:227,179,77;
+    --accent-dark-rgb:196,146,54;
+    --accent-light-rgb:246,226,171;
+    --teal:#33d6ac;
+    --amber:#ffb454;
+    --red:#ff6b6b;
+    --red-rgb:255,107,107;
+
+    --r-lg:26px;
+    --r-md:18px;
+    --r-sm:12px;
+    --r-pill:999px;
+
+    --bg-radial:radial-gradient(circle at 20% 15%, #20160c 0%, var(--bg-0) 55%);
+    --shadow-glass:0 20px 50px -20px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06);
+    --orb-a:#b5651d; --orb-b:#a87c3f; --orb-c:#d4af37; --orb-opacity:0.5;
+
+    --inset-1:rgba(255,255,255,0.05);
+    --inset-2:rgba(255,255,255,0.08);
+    --inset-3:rgba(255,255,255,0.18);
+  }
+
+  [data-theme="light"]{
+    --bg-0:#f6f1e7;
+    --bg-1:#efe7d5;
+    --text:#2a2114;
+    --text-dim:rgba(42,33,20,0.62);
+    --text-faint:rgba(42,33,20,0.42);
+
+    --glass:rgba(255,255,255,0.5);
+    --glass-strong:rgba(255,255,255,0.68);
+    --glass-press:rgba(255,255,255,0.85);
+    --hairline:rgba(42,33,20,0.09);
+    --edge:rgba(255,255,255,0.6);
+    --edge-hi:rgba(255,255,255,0.95);
+
+    --accent:#a8791f;
+    --accent-strong:#8a5f11;
+    --accent-rgb:184,134,11;
+    --accent-dark-rgb:150,108,8;
+    --accent-light-rgb:255,235,180;
+    --teal:#0f9d78;
+    --amber:#b9740f;
+    --red:#d13f3f;
+    --red-rgb:209,63,63;
+
+    --bg-radial:radial-gradient(circle at 20% 10%, #fffdf6 0%, var(--bg-0) 55%);
+    --shadow-glass:0 20px 44px -22px rgba(60,44,10,0.2), inset 0 1px 0 rgba(255,255,255,0.9);
+    --orb-a:#f0b98a; --orb-b:#e3c98f; --orb-c:#f5dfa0; --orb-opacity:0.6;
+
+    --inset-1:rgba(42,33,20,0.045);
+    --inset-2:rgba(42,33,20,0.07);
+    --inset-3:rgba(42,33,20,0.14);
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--bg-0);
+    color:var(--text);
+    font-family:-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    font-variant-numeric:tabular-nums;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+    transition:background .3s ease, color .3s ease;
+  }
+  ::selection{background:rgba(var(--accent-rgb),0.35);}
+
+  /* ---------------- ambient background ---------------- */
+  .bg{
+    position:fixed; inset:0; z-index:-1; overflow:hidden;
+    background:var(--bg-radial);
+    transition:background .3s ease;
+  }
+  .orb{
+    position:absolute; border-radius:50%;
+    filter:blur(70px);
+    opacity:var(--orb-opacity);
+    will-change:transform;
+    transition:background .3s ease, opacity .3s ease;
+  }
+  .orb-a{ width:46vw; height:46vw; left:-12vw; top:-14vw; background:var(--orb-a); animation:driftA 46s ease-in-out infinite; }
+  .orb-b{ width:38vw; height:38vw; right:-10vw; top:8vw; background:var(--orb-b); animation:driftB 54s ease-in-out infinite; }
+  .orb-c{ width:42vw; height:42vw; left:18vw; bottom:-20vw; background:var(--orb-c); animation:driftC 60s ease-in-out infinite; }
+  @keyframes driftA{ 0%,100%{transform:translate(0,0);} 50%{transform:translate(4vw,5vw);} }
+  @keyframes driftB{ 0%,100%{transform:translate(0,0);} 50%{transform:translate(-5vw,4vw);} }
+  @keyframes driftC{ 0%,100%{transform:translate(0,0);} 50%{transform:translate(3vw,-4vw);} }
+  @media (prefers-reduced-motion: reduce){
+    .orb{animation:none !important;}
+    *{transition:none !important;}
+  }
+
+  /* ---------------- glass primitive ---------------- */
+  .glass{
+    background:var(--glass);
+    -webkit-backdrop-filter:blur(28px) saturate(160%);
+    backdrop-filter:blur(28px) saturate(160%);
+    border:1px solid var(--edge);
+    border-top-color:var(--edge-hi);
+    box-shadow:var(--shadow-glass);
+    transition:background .3s ease, border-color .3s ease, box-shadow .3s ease;
+  }
+
+  /* ---------------- top bar ---------------- */
+  .topbar-wrap{ position:sticky; top:0; z-index:40; padding:16px 20px 0; }
+  .topbar{
+    max-width:1560px; margin:0 auto;
+    border-radius:var(--r-pill);
+    padding:9px 12px;
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+  }
+  .brand{display:flex; align-items:center; gap:10px; min-width:0;}
+  .brand-logo{ font-size:0.95rem; font-weight:800; letter-spacing:-0.01em; color:var(--text-dim); padding-left:8px; }
+  .topbar-actions{display:flex; align-items:center; gap:8px;}
+  .menu-wrap{ position:relative; }
+
+  .ledger-switch{
+    display:inline-flex; align-items:center; gap:7px;
+    background:var(--glass-strong); border:1px solid var(--edge); border-top-color:var(--edge-hi);
+    color:var(--text); font-family:inherit; font-weight:700; font-size:0.9rem;
+    padding:8px 13px 8px 15px; border-radius:var(--r-pill); cursor:pointer;
+    -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
+    transition:background .15s ease;
+  }
+  .ledger-switch:hover{ background:var(--glass-press); }
+  .ledger-switch svg{ width:12px; height:12px; color:var(--text-faint); flex:none; }
+
+  .popover-menu{
+    position:absolute; top:calc(100% + 8px); left:0;
+    min-width:230px; max-width:290px;
+    border-radius:18px; padding:8px;
+    z-index:70; display:none;
+  }
+  .popover-menu.align-right{ left:auto; right:0; }
+  .popover-menu.open{ display:block; }
+  .popover-row{ display:flex; align-items:center; gap:2px; }
+  .popover-item{
+    flex:1; text-align:left;
+    background:none; border:none; color:var(--text);
+    font-family:inherit; font-size:0.85rem; font-weight:600;
+    padding:9px 10px; border-radius:11px; cursor:pointer;
+  }
+  .popover-item:hover{ background:var(--inset-1); }
+  .popover-row.active .popover-item{ color:var(--accent-strong); }
+  .popover-icon-btn{
+    width:26px; height:26px; border-radius:50%; flex:none;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:none; border:none; color:var(--text-faint); cursor:pointer;
+  }
+  .popover-icon-btn svg{ width:12px; height:12px; }
+  .popover-icon-btn:hover{ background:var(--inset-1); color:var(--text); }
+  .popover-icon-btn:disabled{ opacity:0.25; cursor:not-allowed; }
+  .popover-divider{ height:1px; background:var(--hairline); margin:6px 6px; }
+
+  /* ---------------- tab bar ---------------- */
+  .tabbar-wrap{ max-width:1560px; margin:0 auto; padding:14px 32px 0; }
+  .tabbar{ max-width:360px; margin:0 auto; }
+
+  /* ---------------- buttons ---------------- */
+  .btn{
+    font-family:inherit;
+    cursor:pointer;
+    border:1px solid var(--edge);
+    border-top-color:var(--edge-hi);
+    background:var(--glass-strong);
+    color:var(--text);
+    border-radius:var(--r-pill);
+    padding:9px 18px;
+    font-size:0.85rem;
+    font-weight:600;
+    -webkit-backdrop-filter:blur(20px);
+    backdrop-filter:blur(20px);
+    transition:transform .12s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{background:var(--glass-press);}
+  .btn:active{transform:scale(0.96);}
+  .btn:disabled{opacity:0.35; cursor:not-allowed; transform:none;}
+  .btn-primary{
+    background:linear-gradient(180deg, rgba(var(--accent-rgb),0.92), rgba(var(--accent-dark-rgb),0.92));
+    border-color:rgba(var(--accent-light-rgb),0.6);
+    border-top-color:rgba(var(--accent-light-rgb),0.9);
+    box-shadow:0 10px 24px -8px rgba(var(--accent-dark-rgb),0.6), inset 0 1px 0 rgba(255,255,255,0.35);
+    color:#fff;
+  }
+  .btn-primary:hover{background:linear-gradient(180deg, rgba(var(--accent-rgb),1), rgba(var(--accent-dark-rgb),1));}
+  .btn-ghost{ background:transparent; border-color:var(--hairline); color:var(--text-dim); box-shadow:none; }
+  .btn-ghost:hover{background:var(--inset-1); color:var(--text);}
+  .btn-small{padding:6px 13px; font-size:0.76rem;}
+
+  .icon-btn{
+    width:34px; height:34px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center;
+    border:1px solid var(--edge); border-top-color:var(--edge-hi);
+    background:var(--glass-strong);
+    color:var(--text-dim);
+    cursor:pointer;
+    -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
+    transition:transform .12s ease, background .15s ease, color .15s ease;
+  }
+  .icon-btn:hover{background:var(--glass-press); color:var(--text);}
+  .icon-btn:active{transform:scale(0.92);}
+  .icon-btn:disabled{opacity:0.3; cursor:not-allowed;}
+  .icon-btn.danger:hover{color:var(--red);}
+  .icon-btn.confirm:hover{color:var(--teal);}
+  .icon-btn.spend:hover{color:var(--amber);}
+  .icon-btn svg{width:15px; height:15px;}
+
+  .fab{
+    width:36px; height:36px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:linear-gradient(180deg, rgba(var(--accent-rgb),0.92), rgba(var(--accent-dark-rgb),0.92));
+    border:1px solid rgba(var(--accent-light-rgb),0.6); border-top-color:rgba(var(--accent-light-rgb),0.9);
+    box-shadow:0 10px 24px -8px rgba(var(--accent-dark-rgb),0.6);
+    color:#fff; cursor:pointer; transition:transform .12s ease;
+  }
+  .fab:hover{transform:scale(1.06);}
+  .fab svg{width:16px; height:16px;}
+
+  /* ---------------- layout ---------------- */
+  main{ max-width:1560px; margin:0 auto; padding:22px 32px 90px; }
+  section{margin-bottom:34px;}
+  .content-grid{ display:grid; grid-template-columns:1fr; gap:0; }
+  .col-left, .col-right{ min-width:0; }
+  @media (min-width:1101px){
+    .content-grid{ grid-template-columns:1fr 500px; gap:28px; align-items:start; margin-bottom:34px; }
+    .content-grid section{ margin-bottom:34px; }
+    .content-grid section:last-child{ margin-bottom:0; }
+    .col-right{ position:sticky; top:88px; }
+  }
+  .section-head{ display:flex; align-items:center; justify-content:space-between; padding:0 6px 12px; }
+  .section-head h2{ font-size:1rem; font-weight:700; margin:0; letter-spacing:-0.01em; }
+  .section-head .hint{ font-size:0.78rem; color:var(--text-faint); }
+
+  /* ---------------- quick actions ---------------- */
+  .quick-actions-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .quick-action-btn{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    padding:22px 16px;
+    border-radius:var(--r-lg);
+    cursor:pointer;
+    font-family:inherit;
+    color:var(--text);
+    transition:transform .12s ease, background .15s ease;
+  }
+  .quick-action-btn:hover{ transform:translateY(-2px); background:var(--glass-strong); }
+  .quick-action-btn:active{ transform:scale(0.98); }
+  .quick-action-icon{
+    width:46px; height:46px; border-radius:50%; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff;
+  }
+  .quick-action-icon svg{ width:20px; height:20px; }
+  .quick-action-icon.add{ background:linear-gradient(180deg, rgba(var(--accent-rgb),0.95), rgba(var(--accent-dark-rgb),0.95)); }
+  .quick-action-icon.spend{ background:linear-gradient(180deg, rgba(var(--red-rgb),0.95), rgba(var(--red-rgb),0.75)); }
+  .quick-action-label{ font-size:0.92rem; font-weight:700; }
+  .quick-action-sub{ font-size:0.72rem; color:var(--text-faint); margin-top:-6px; }
+
+  /* ---------------- stat tiles ---------------- */
+  .stats-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+    gap:10px;
+  }
+  .stat-tile{
+    border-radius:var(--r-md);
+    padding:16px 18px;
+  }
+  .stat-tile .label{ font-size:0.72rem; color:var(--text-dim); margin-bottom:8px; }
+  .stat-tile .val{ font-size:1.5rem; font-weight:800; letter-spacing:-0.02em; }
+  .stat-tile.danger .val{ color:var(--red); }
+
+  /* ---------------- grouped list ---------------- */
+  .grouped{ border-radius:var(--r-lg); overflow:hidden; }
+  .row{
+    display:grid;
+    grid-template-columns:78px 1fr auto auto;
+    align-items:center;
+    gap:16px;
+    padding:14px 20px;
+    border-bottom:1px solid var(--hairline);
+  }
+  .row:last-child{border-bottom:none;}
+  .date-chip{
+    text-align:center;
+    font-size:0.78rem;
+    font-weight:700;
+    padding:7px 6px;
+    border-radius:var(--r-sm);
+    background:var(--inset-1);
+    border:1px solid var(--hairline);
+    white-space:nowrap;
+  }
+  .row-info .name{ font-weight:650; font-size:0.95rem; }
+  .row-info .meta{ font-size:0.78rem; color:var(--text-dim); margin-top:2px; }
+  .row-info .progress-track{ height:4px; border-radius:4px; background:var(--inset-2); margin-top:9px; width:190px; max-width:60vw; overflow:hidden; }
+  .row-info .progress-fill{ height:100%; background:linear-gradient(90deg, var(--accent), var(--teal)); border-radius:4px; }
+  .row-info .progress-label{ font-size:0.72rem; color:var(--text-faint); margin-top:5px; }
+
+  .row-amt{ text-align:right; }
+  .row-amt .amount{ font-weight:700; font-size:0.95rem; }
+  .row-amt .amount.negative{ color:var(--red); }
+  .row-amt .remaining{ font-size:0.74rem; color:var(--text-faint); margin-top:2px; }
+  .row-amt .pill{
+    display:inline-block; margin-top:6px;
+    font-size:0.66rem; font-weight:700; letter-spacing:0.01em;
+    padding:3px 9px; border-radius:var(--r-pill);
+  }
+  .pill.active{ background:rgba(var(--accent-rgb),0.16); color:var(--accent-strong); border:1px solid rgba(var(--accent-rgb),0.3); }
+  .pill.due-soon{ background:rgba(255,180,84,0.16); color:var(--amber); border:1px solid rgba(255,180,84,0.32); }
+  .pill.overdue{ background:rgba(255,107,107,0.16); color:var(--red); border:1px solid rgba(255,107,107,0.32); }
+  .pill.done{ background:var(--inset-2); color:var(--text-faint); border:1px solid var(--hairline); }
+
+  .row-actions{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+
+  .empty-state{
+    padding:44px 20px; text-align:center; color:var(--text-dim);
+    border-radius:var(--r-lg);
+  }
+  .empty-state strong{ display:block; color:var(--text); font-size:0.98rem; margin-bottom:5px; }
+
+  /* ---------------- sheets ---------------- */
+  .sheet-backdrop{
+    position:fixed; inset:0; z-index:60;
+    background:rgba(3,5,10,0.55);
+    -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+    display:none; align-items:flex-start; justify-content:center;
+    padding:6vh 16px; overflow-y:auto;
+  }
+  .sheet-backdrop.open{display:flex;}
+  .sheet{
+    width:100%; max-width:560px;
+    border-radius:28px;
+    padding:26px 26px 22px;
+    animation:sheetIn .22s cubic-bezier(.2,.9,.3,1);
+  }
+  @keyframes sheetIn{ from{opacity:0; transform:translateY(14px) scale(0.98);} to{opacity:1; transform:none;} }
+  .sheet-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .sheet-head h3{ margin:0; font-size:1.05rem; font-weight:700; }
+
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field.span-2{ grid-column:1 / -1; }
+  .field.hidden{ display:none; }
+  .field label{ font-size:0.72rem; color:var(--text-dim); font-weight:600; padding-left:2px; }
+  .field .subtext{ font-size:0.68rem; color:var(--text-faint); padding-left:2px; }
+  .field input, .field select{
+    font-family:inherit; font-size:0.9rem; color:var(--text);
+    padding:10px 13px;
+    border-radius:var(--r-sm);
+    border:1px solid var(--hairline);
+    background:var(--inset-1);
+  }
+  .field input::placeholder{ color:var(--text-faint); }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--accent); background:rgba(var(--accent-rgb),0.08); }
+  .field input[type="date"]{ color-scheme:dark; }
+  [data-theme="light"] .field input[type="date"]{ color-scheme:light; }
+
+  /* ---------------- theme toggle ---------------- */
+  .theme-toggle{ width:auto; padding:3px; flex-shrink:0; }
+  .theme-toggle .seg-btn{ flex:none; width:30px; height:26px; display:flex; align-items:center; justify-content:center; padding:0; }
+  .theme-toggle .seg-btn svg{ width:14px; height:14px; }
+
+  .segmented{
+    position:relative;
+    display:flex;
+    padding:3px;
+    border-radius:var(--r-pill);
+    background:var(--inset-1);
+    border:1px solid var(--hairline);
+  }
+  .seg-thumb{
+    position:absolute; top:3px; left:3px; bottom:3px;
+    border-radius:var(--r-pill);
+    background:var(--glass-press);
+    border:1px solid var(--edge-hi);
+    transition:transform .22s cubic-bezier(.2,.9,.3,1), width .22s cubic-bezier(.2,.9,.3,1);
+    z-index:0;
+  }
+  .seg-btn{
+    position:relative; z-index:1;
+    flex:1; text-align:center;
+    font-family:inherit; font-size:0.78rem; font-weight:600;
+    color:var(--text-dim);
+    background:none; border:none; cursor:pointer;
+    padding:8px 6px;
+    border-radius:var(--r-pill);
+    transition:color .15s ease;
+  }
+  .seg-btn.active{ color:var(--text); }
+
+  .form-actions{ margin-top:20px; display:flex; gap:10px; }
+  .form-actions .btn{ flex:1; text-align:center; }
+
+  /* ---------------- breakdown ---------------- */
+  .breakdown-row{
+    display:grid; grid-template-columns:1.4fr 0.6fr 1fr 1fr;
+    padding:12px 20px; border-bottom:1px solid var(--hairline);
+    font-size:0.84rem; align-items:center;
+  }
+  .breakdown-row:last-child{border-bottom:none;}
+  .breakdown-row.head{ color:var(--text-faint); font-size:0.68rem; font-weight:700; letter-spacing:0.02em; }
+  .breakdown-row .num{ text-align:right; }
+
+  footer{ text-align:center; color:var(--text-faint); font-size:0.76rem; padding:10px 20px 26px; }
+
+  .toast{
+    position:fixed; bottom:26px; left:50%; z-index:80;
+    transform:translateX(-50%) translateY(16px);
+    padding:12px 22px;
+    border-radius:var(--r-pill);
+    font-size:0.85rem; font-weight:600;
+    opacity:0; pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ---------------- calendar ---------------- */
+  .calendar-row{ display:flex; flex-direction:column; gap:16px; max-width:500px; }
+  .cal-main{
+    width:100%;
+    aspect-ratio:4/3;
+    border-radius:var(--r-lg);
+    padding:20px 22px 16px;
+    display:flex; flex-direction:column;
+  }
+  .cal-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .cal-header h3{ margin:0; font-size:1.05rem; font-weight:700; letter-spacing:-0.01em; }
+  .cal-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px; }
+  .cal-weekdays span{ text-align:center; font-size:0.66rem; color:var(--text-faint); font-weight:700; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:1fr; gap:6px; flex:1; min-height:0; }
+  .cal-cell{
+    border-radius:10px; padding:6px 7px 5px;
+    display:flex; flex-direction:column;
+    background:var(--inset-1);
+    border:1px solid transparent;
+    min-height:0; min-width:0;
+  }
+  .cal-cell.out{ opacity:0.28; }
+  .cal-cell.today{ border-color:var(--accent); background:rgba(var(--accent-rgb),0.14); }
+  .cal-daynum{ font-size:0.78rem; font-weight:700; }
+  .cal-dots{ margin-top:auto; display:flex; gap:3px; flex-wrap:wrap; align-items:center; }
+  .cal-dot{ width:6px; height:6px; border-radius:50%; background:var(--accent); flex:none; }
+  .cal-dot.extra{ font-size:0.56rem; font-weight:700; color:var(--text-dim); }
+
+  .cal-mini-col{ display:flex; flex-direction:row; gap:16px; }
+  .cal-mini{
+    flex:1; min-width:0; height:128px;
+    border-radius:var(--r-md);
+    padding:10px 12px;
+    display:flex; flex-direction:column;
+  }
+  .cal-mini-head{ font-size:0.72rem; font-weight:700; color:var(--text-dim); margin-bottom:5px; }
+  .cal-mini-grid{ display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:1fr; gap:2px; flex:1; min-height:0; }
+  .cal-mini-cell{
+    position:relative;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.6rem; color:var(--text-dim);
+    border-radius:4px;
+  }
+  .cal-mini-cell.out{ visibility:hidden; }
+  .cal-mini-cell.today{ background:rgba(var(--accent-rgb),0.2); color:var(--text); font-weight:700; border-radius:50%; }
+  .cal-mini-cell.due::after{
+    content:''; position:absolute; bottom:1px; left:50%; transform:translateX(-50%);
+    width:3px; height:3px; border-radius:50%; background:var(--accent);
+  }
+
+  @media (max-width:520px){
+    .calendar-row{ max-width:none; }
+    .cal-mini-col{ flex-direction:column; }
+    .cal-mini{ height:70px; }
+  }
+
+  @media (max-width:640px){
+    .form-grid{ grid-template-columns:1fr; }
+    .field.span-2{ grid-column:1; }
+    .row{ grid-template-columns:56px 1fr; grid-template-areas:"chip info" "amt amt" "actions actions"; row-gap:10px; }
+    .row-amt{ text-align:left; grid-area:amt; }
+    .row-actions{ grid-area:actions; justify-content:flex-start; }
+    .brand-logo{ display:none; }
+    .breakdown-row{ grid-template-columns:1.2fr 0.5fr 0.8fr 0.8fr; font-size:0.76rem; padding:12px 14px; }
+    main{ padding:20px 14px 90px; }
+    .tabbar-wrap{ padding:14px 14px 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg"><div class="orb orb-a"></div><div class="orb orb-b"></div><div class="orb orb-c"></div></div>
+
+<div class="topbar-wrap">
+  <div class="topbar glass">
+    <div class="brand">
+      <div class="menu-wrap">
+        <button type="button" class="ledger-switch" id="btn-ledger-switch">
+          <span id="active-ledger-name">Me</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="popover-menu glass" id="ledger-menu"></div>
+      </div>
+      <span class="brand-logo">Ledger</span>
+    </div>
+    <div class="topbar-actions">
+      <div class="segmented theme-toggle" id="theme-group" data-value="light">
+        <div class="seg-thumb" id="theme-thumb"></div>
+        <button type="button" class="seg-btn" data-value="dark" aria-label="Dark mode" title="Dark mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button type="button" class="seg-btn active" data-value="light" aria-label="Light mode" title="Light mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+      </div>
+      <div class="menu-wrap">
+        <button type="button" class="icon-btn" id="btn-more-menu" aria-label="More">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+        </button>
+        <div class="popover-menu glass align-right" id="more-menu">
+          <button type="button" class="popover-item" id="btn-backup" style="width:100%; text-align:left;">Backup data (.json)</button>
+          <button type="button" class="popover-item" id="btn-restore" style="width:100%; text-align:left;">Restore from backup</button>
+          <input type="file" id="restore-input" accept="application/json" hidden>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tabbar-wrap">
+  <div class="segmented tabbar glass" id="tab-group" data-value="wallet">
+    <div class="seg-thumb" id="tab-thumb"></div>
+    <button type="button" class="seg-btn active" data-value="wallet">Wallet</button>
+    <button type="button" class="seg-btn" data-value="loans">Loans</button>
+  </div>
+</div>
+
+<main>
+
+  <section>
+    <div class="stats-grid" id="stats-strip"></div>
+  </section>
+
+  <div id="tab-wallet">
+    <section>
+      <div class="quick-actions-grid">
+        <button type="button" class="quick-action-btn glass" id="btn-quick-add">
+          <span class="quick-action-icon add">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </span>
+          <span class="quick-action-label">Add balance</span>
+          <span class="quick-action-sub">Funds into a wallet</span>
+        </button>
+        <button type="button" class="quick-action-btn glass" id="btn-quick-spend">
+          <span class="quick-action-icon spend">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>
+          </span>
+          <span class="quick-action-label">Log expense</span>
+          <span class="quick-action-sub">From a wallet or a loan</span>
+        </button>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Wallets</h2>
+        <button class="fab" id="btn-add-wallet" title="Add a wallet" aria-label="Add a wallet">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="grouped glass" id="wallet-list"></div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>Recent activity</h2></div>
+      <div class="grouped glass" id="activity-list"></div>
+    </section>
+  </div>
+
+  <div id="tab-loans" style="display:none;">
+    <div class="content-grid">
+      <div class="col-left">
+
+        <section>
+          <div class="section-head">
+            <h2>Due this month</h2>
+            <span class="hint" id="month-label"></span>
+          </div>
+          <div class="grouped glass" id="due-list"></div>
+        </section>
+
+        <section>
+          <div class="section-head">
+            <h2>All loans</h2>
+            <button class="fab" id="btn-toggle-form" title="Add a loan" aria-label="Add a loan">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </div>
+          <div class="grouped glass" id="loan-list"></div>
+        </section>
+
+      </div>
+
+      <div class="col-right">
+        <section>
+          <div class="section-head"><h2>Calendar</h2></div>
+          <div class="calendar-row">
+            <div class="cal-main glass">
+              <div class="cal-header"><h3 id="cal-main-title"></h3></div>
+              <div class="cal-weekdays"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+              <div class="cal-grid" id="cal-main-grid"></div>
+            </div>
+            <div class="cal-mini-col">
+              <div class="cal-mini glass"><div class="cal-mini-head" id="cal-mini-title-1"></div><div class="cal-mini-grid" id="cal-mini-grid-1"></div></div>
+              <div class="cal-mini glass"><div class="cal-mini-head" id="cal-mini-title-2"></div><div class="cal-mini-grid" id="cal-mini-grid-2"></div></div>
+              <div class="cal-mini glass"><div class="cal-mini-head" id="cal-mini-title-3"></div><div class="cal-mini-grid" id="cal-mini-grid-3"></div></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <section id="breakdown-section">
+      <div class="section-head"><h2>By lender</h2></div>
+      <div class="grouped glass" id="breakdown-body">
+        <div class="breakdown-row head"><span>Lender</span><span class="num">Loans</span><span class="num">Due this month</span><span class="num">Remaining</span></div>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<footer>Autosaved on this device. Use the ⋮ menu to back up or restore a ledger, or the switcher up top to add another ledger.</footer>
+
+<!-- Loan sheet -->
+<div class="sheet-backdrop" id="sheet-backdrop">
+  <form class="sheet glass" id="loan-form">
+    <div class="sheet-head">
+      <h3 id="sheet-title">Add a loan</h3>
+      <button type="button" class="icon-btn" id="btn-cancel-form" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="form-grid">
+      <div class="field span-2">
+        <label for="f-name">Loan name</label>
+        <input type="text" id="f-name" placeholder="e.g. Motorcycle loan" required>
+      </div>
+      <div class="field">
+        <label for="f-platform">Lender / platform</label>
+        <input type="text" id="f-platform" placeholder="e.g. BPI, Home Credit">
+      </div>
+      <div class="field">
+        <label for="f-principal">Total loan amount</label>
+        <input type="number" id="f-principal" min="0" step="0.01" placeholder="0.00">
+      </div>
+
+      <div class="field">
+        <label for="f-amount">Payment amount</label>
+        <input type="number" id="f-amount" min="0" step="0.01" placeholder="0.00" required>
+      </div>
+      <div class="field">
+        <label>Charged</label>
+        <div class="segmented" id="freq-group" data-value="monthly">
+          <div class="seg-thumb" id="seg-thumb"></div>
+          <button type="button" class="seg-btn active" data-value="monthly">Monthly</button>
+          <button type="button" class="seg-btn" data-value="14">14 days</button>
+          <button type="button" class="seg-btn" data-value="15">15 days</button>
+          <button type="button" class="seg-btn" data-value="custom">Custom</button>
+        </div>
+      </div>
+
+      <div class="field" id="field-dueday">
+        <label for="f-dueday">Due day of month</label>
+        <input type="number" id="f-dueday" min="1" max="31" placeholder="e.g. 15">
+      </div>
+      <div class="field hidden" id="field-interval">
+        <label for="f-interval">Days between payments</label>
+        <input type="number" id="f-interval" min="1" placeholder="e.g. 10">
+      </div>
+      <div class="field">
+        <label for="f-start">First due / start date</label>
+        <input type="date" id="f-start">
+      </div>
+
+      <div class="field">
+        <label for="f-term">Total number of payments</label>
+        <input type="number" id="f-term" min="0" placeholder="blank = ongoing">
+      </div>
+      <div class="field">
+        <label for="f-paid">Payments already made</label>
+        <input type="number" id="f-paid" min="0" value="0">
+      </div>
+      <div class="field span-2">
+        <label for="f-notes">Notes (optional)</label>
+        <input type="text" id="f-notes" placeholder="account number, contact, anything worth remembering">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn" id="btn-delete-loan" style="display:none;">Delete</button>
+      <button type="submit" class="btn btn-primary" id="btn-submit-loan">Add loan</button>
+    </div>
+  </form>
+</div>
+
+<!-- Wallet sheet -->
+<div class="sheet-backdrop" id="wallet-sheet-backdrop">
+  <form class="sheet glass" id="wallet-form">
+    <div class="sheet-head">
+      <h3 id="wallet-sheet-title">Add a wallet</h3>
+      <button type="button" class="icon-btn" id="btn-cancel-wallet-form" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="form-grid">
+      <div class="field span-2">
+        <label for="w-name">Wallet name</label>
+        <input type="text" id="w-name" placeholder="e.g. GCash, BPI Savings, Cash on hand" required>
+      </div>
+      <div class="field">
+        <label for="w-platform">Platform / type</label>
+        <input type="text" id="w-platform" placeholder="e.g. E-wallet, Bank, Cash">
+      </div>
+      <div class="field" id="w-field-balance">
+        <label for="w-balance">Starting balance</label>
+        <input type="number" id="w-balance" min="0" step="0.01" placeholder="0.00">
+      </div>
+      <div class="field span-2">
+        <label for="w-notes">Notes (optional)</label>
+        <input type="text" id="w-notes" placeholder="account number, anything worth remembering">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn" id="btn-delete-wallet" style="display:none;">Delete</button>
+      <button type="submit" class="btn btn-primary" id="btn-submit-wallet">Add wallet</button>
+    </div>
+  </form>
+</div>
+
+<!-- Transaction sheet -->
+<div class="sheet-backdrop" id="txn-sheet-backdrop">
+  <form class="sheet glass" id="txn-form">
+    <div class="sheet-head">
+      <h3 id="txn-sheet-title">Wallet</h3>
+      <button type="button" class="icon-btn" id="btn-cancel-txn-form" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="form-grid">
+      <div class="field span-2">
+        <label>Type</label>
+        <div class="segmented" id="txn-type-group" data-value="add">
+          <div class="seg-thumb" id="txn-type-thumb"></div>
+          <button type="button" class="seg-btn active" data-value="add">Add funds</button>
+          <button type="button" class="seg-btn" data-value="spend">Spend / purchase</button>
+        </div>
+      </div>
+      <div class="field span-2 hidden" id="field-txn-dest">
+        <label>Deduct from</label>
+        <div class="segmented" id="txn-dest-group" data-value="wallet">
+          <div class="seg-thumb" id="txn-dest-thumb"></div>
+          <button type="button" class="seg-btn active" data-value="wallet">This wallet</button>
+          <button type="button" class="seg-btn" data-value="loan">Charge to a loan</button>
+        </div>
+      </div>
+      <div class="field span-2" id="field-txn-wallet">
+        <label for="txn-wallet-select">Wallet</label>
+        <select id="txn-wallet-select"></select>
+      </div>
+      <div class="field span-2 hidden" id="field-txn-loan">
+        <label for="txn-loan-select">Loan</label>
+        <select id="txn-loan-select"></select>
+        <span class="subtext">This won't touch your wallet balance — it adds to what you owe on that loan (e.g. a credit card).</span>
+      </div>
+      <div class="field">
+        <label for="txn-amount">Amount</label>
+        <input type="number" id="txn-amount" min="0" step="0.01" placeholder="0.00" required>
+      </div>
+      <div class="field">
+        <label for="txn-date">Date</label>
+        <input type="date" id="txn-date">
+      </div>
+      <div class="field span-2">
+        <label for="txn-note">Note (optional)</label>
+        <input type="text" id="txn-note" placeholder="e.g. groceries, salary, transfer">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" id="btn-submit-txn">Save</button>
+    </div>
+  </form>
+</div>
+
+<div class="toast glass" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- icons ---------- */
+  var ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>';
+  var ICON_EDIT  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
+  var ICON_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>';
+  var ICON_PLUS  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+  var ICON_MINUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M5 12h14"/></svg>';
+
+  /* ---------- storage / multi-ledger ---------- */
+  var IDX_KEY = 'ledgerapp_index_v1';
+  var THEME_KEY = 'ledgerapp_theme_v1';
+  function ledgerKey(id){ return 'ledgerapp_ledger_'+id+'_v1'; }
+  function uid(){ return 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+  function loadIndex(){ try{ var r = localStorage.getItem(IDX_KEY); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
+  function saveIndex(){ try{ localStorage.setItem(IDX_KEY, JSON.stringify(index)); }catch(e){} }
+  function loadLedger(id){ try{ var r = localStorage.getItem(ledgerKey(id)); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
+  function saveLedgerRaw(id, data){ try{ localStorage.setItem(ledgerKey(id), JSON.stringify(data)); }catch(e){} }
+  function persist(){ saveLedgerRaw(index.activeId, {loans:loans, wallets:wallets, transactions:transactions}); }
+
+  var index = loadIndex();
+  if(!index || !index.ledgers || !index.ledgers.length){
+    var migrated = [];
+    try{ migrated = JSON.parse(document.getElementById('loan-data').textContent || '[]'); }catch(e){}
+    var firstId = uid();
+    index = {activeId:firstId, ledgers:[{id:firstId, name:'Me'}]};
+    saveIndex();
+    saveLedgerRaw(firstId, {loans:migrated, wallets:[], transactions:[]});
+  }
+  if(!index.ledgers.some(function(l){ return l.id===index.activeId; })){ index.activeId = index.ledgers[0].id; saveIndex(); }
+
+  var initData = loadLedger(index.activeId) || {loans:[], wallets:[], transactions:[]};
+  var loans = initData.loans || [];
+  var wallets = initData.wallets || [];
+  var transactions = initData.transactions || [];
+
+  /* ---------- date helpers ---------- */
+  function peso(n){ n = Number(n)||0; return n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function pesoSigned(n){ n = Number(n)||0; return (n<0?'−':'')+'₱'+peso(Math.abs(n)); }
+  function today(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
+  function todayStr(){ var d = today(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function parseDate(s){ return s ? new Date(s+'T00:00:00') : today(); }
+  function daysUntil(d){ return Math.round((d - today())/86400000); }
+  function shortDate(d){ return d.toLocaleDateString(undefined,{month:'short', day:'numeric'}); }
+  function fmtDay(n){ n = Number(n); var s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+
+  /* ---------- cadence math ----------
+     Every loan is a sequence of payment cycles starting at "first due date" (k=0),
+     spaced either by calendar month (frequency: monthly) or a fixed number of days
+     (frequency: days, loan.intervalDays). loan.paid cycles are already paid, so
+     cycle k = paid is always the next unpaid installment. */
+  function firstDueDate(loan){
+    var start = parseDate(loan.start);
+    if(loan.frequency === 'monthly'){
+      var day = Number(loan.dueDay) || start.getDate();
+      var daysInMonth = new Date(start.getFullYear(), start.getMonth()+1, 0).getDate();
+      return new Date(start.getFullYear(), start.getMonth(), Math.min(day, daysInMonth));
+    }
+    return start;
+  }
+  function dueDateForCycle(loan, k){
+    var base = firstDueDate(loan);
+    if(loan.frequency === 'monthly'){
+      var day = Number(loan.dueDay) || base.getDate();
+      var targetMonth = base.getMonth() + k;
+      var targetYear = base.getFullYear() + Math.floor(targetMonth/12);
+      targetMonth = ((targetMonth % 12) + 12) % 12;
+      var daysInTarget = new Date(targetYear, targetMonth+1, 0).getDate();
+      return new Date(targetYear, targetMonth, Math.min(day, daysInTarget));
+    }
+    var interval = Number(loan.intervalDays) || 14;
+    var d = new Date(base);
+    d.setDate(d.getDate() + interval*k);
+    return d;
+  }
+  function nextDueDate(loan){ return dueDateForCycle(loan, Number(loan.paid)||0); }
+  function hasTerm(loan){ return Number(loan.term) > 0; }
+  function remainingCount(loan){ return hasTerm(loan) ? Math.max(0, Number(loan.term) - (Number(loan.paid)||0)) : null; }
+  function remainingBalance(loan){
+    var extra = Number(loan.extraCharged)||0;
+    if(!hasTerm(loan)) return extra>0 ? extra : null;
+    var rc = remainingCount(loan);
+    return rc*(Number(loan.amount)||0) + extra;
+  }
+  function isDone(loan){
+    var rc = remainingCount(loan);
+    return rc!==null && rc<=0 && (Number(loan.extraCharged)||0)<=0;
+  }
+  function cadenceLabel(loan){ return loan.frequency==='monthly' ? '/mo' : '/'+(Number(loan.intervalDays)||14)+'d'; }
+  function cadenceText(loan){
+    if(loan.frequency==='monthly') return 'Monthly, due the '+fmtDay(loan.dueDay||1);
+    return 'Every '+(Number(loan.intervalDays)||14)+' days';
+  }
+  function statusOf(loan){
+    if(isDone(loan)) return {cls:'done', label:'Paid off'};
+    var du = daysUntil(nextDueDate(loan));
+    if(du < 0) return {cls:'overdue', label:'Overdue'};
+    if(du <= 5) return {cls:'due-soon', label: du===0 ? 'Due today' : 'Due in '+du+'d'};
+    return {cls:'active', label:'On track'};
+  }
+  function monthDueEntries(loan, monthEnd){
+    var entries = [], k = Number(loan.paid)||0, guard = 0;
+    var d = dueDateForCycle(loan, k);
+    while(d <= monthEnd && (!hasTerm(loan) || k < Number(loan.term)) && guard < 400){
+      entries.push({loan:loan, date:d, k:k, isNext: entries.length===0});
+      k++; d = dueDateForCycle(loan, k); guard++;
+    }
+    return entries;
+  }
+  function entriesInRange(loan, rangeStart, rangeEnd){
+    var entries = [], k = Number(loan.paid)||0, guard = 0;
+    var d = dueDateForCycle(loan, k);
+    while(d < rangeStart && (!hasTerm(loan) || k < Number(loan.term)) && guard < 1000){
+      k++; d = dueDateForCycle(loan, k); guard++;
+    }
+    while(d <= rangeEnd && (!hasTerm(loan) || k < Number(loan.term)) && guard < 1000){
+      entries.push({loan:loan, date:d, k:k});
+      k++; d = dueDateForCycle(loan, k); guard++;
+    }
+    return entries;
+  }
+  function dueMapForMonth(y, m){
+    var map = {};
+    var rangeStart = new Date(y, m, 1);
+    var rangeEnd = new Date(y, m+1, 0, 23,59,59);
+    loans.forEach(function(loan){
+      entriesInRange(loan, rangeStart, rangeEnd).forEach(function(e){
+        var day = e.date.getDate();
+        if(!map[day]) map[day] = [];
+        map[day].push(loan.name);
+      });
+    });
+    return map;
+  }
+
+  /* ---------- render helpers ---------- */
+  function escapeHtml(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function walletTotal(){ return wallets.reduce(function(s,w){ return s + (Number(w.balance)||0); }, 0); }
+
+  function renderStats(){
+    var t = today();
+    var monthEnd = new Date(t.getFullYear(), t.getMonth()+1, 0, 23,59,59);
+    var active = loans.filter(function(l){ return !isDone(l); });
+    var monthlyDue = 0;
+    active.forEach(function(l){ monthDueEntries(l, monthEnd).forEach(function(){ monthlyDue += Number(l.amount)||0; }); });
+    var totalRemaining = loans.reduce(function(s,l){ var rb = remainingBalance(l); return s + (rb===null?0:rb); },0);
+    var overdueCount = loans.filter(function(l){ return !isDone(l) && daysUntil(nextDueDate(l)) < 0; }).length;
+    var funds = walletTotal();
+    var shortfall = monthlyDue - funds;
+    var covered = shortfall <= 0;
+
+    var stats = [
+      {label:'Total funds', val:'₱'+peso(funds), cls:''},
+      {label:'Due this month', val:'₱'+peso(monthlyDue), cls:''},
+      {label:'Coverage', val: covered ? 'Covered' : 'Short ₱'+peso(shortfall), cls: covered ? '' : 'danger'},
+      {label:'Remaining balance', val:'₱'+peso(totalRemaining), cls:''},
+      {label:'Overdue', val: overdueCount, cls: overdueCount>0 ? 'danger' : ''},
+      {label:'Active loans', val: active.length, cls:''}
+    ];
+    document.getElementById('stats-strip').innerHTML = stats.map(function(s){
+      return '<div class="stat-tile glass '+s.cls+'"><div class="label">'+s.label+'</div><div class="val">'+s.val+'</div></div>';
+    }).join('');
+  }
+
+  /* ---------- wallets ---------- */
+  function walletAbbr(w){
+    var src = (w.platform || w.name || '').trim();
+    if(!src) return '$';
+    var words = src.split(/\s+/);
+    if(words.length>=2) return (words[0][0]+words[1][0]).toUpperCase();
+    return src.slice(0,3).toUpperCase();
+  }
+  function walletRowHtml(w){
+    var neg = Number(w.balance)<0;
+    return (
+    '<div class="row" data-id="'+w.id+'">'+
+      '<div class="date-chip">'+escapeHtml(walletAbbr(w))+'</div>'+
+      '<div class="row-info">'+
+        '<div class="name">'+escapeHtml(w.name)+'</div>'+
+        '<div class="meta">'+escapeHtml(w.platform||'—')+(w.notes?' · '+escapeHtml(w.notes):'')+'</div>'+
+      '</div>'+
+      '<div class="row-amt"><div class="amount'+(neg?' negative':'')+'">'+pesoSigned(w.balance)+'</div></div>'+
+      '<div class="row-actions">'+
+        '<button class="icon-btn confirm" data-action="wallet-add" title="Add funds" aria-label="Add funds">'+ICON_PLUS+'</button>'+
+        '<button class="icon-btn spend" data-action="wallet-spend" title="Log purchase" aria-label="Log purchase">'+ICON_MINUS+'</button>'+
+        '<button class="icon-btn" data-action="wallet-edit" title="Edit" aria-label="Edit">'+ICON_EDIT+'</button>'+
+        '<button class="icon-btn danger" data-action="wallet-delete" title="Delete" aria-label="Delete">'+ICON_TRASH+'</button>'+
+      '</div>'+
+    '</div>');
+  }
+  function renderWallets(){
+    var el = document.getElementById('wallet-list');
+    if(wallets.length===0){
+      el.innerHTML = '<div class="empty-state"><strong>No wallets yet</strong>Tap the + button to add cash, a bank account, or an e-wallet.</div>';
+      return;
+    }
+    el.innerHTML = wallets.map(walletRowHtml).join('');
+  }
+
+  function activityRowHtml(tx){
+    if(tx.type==='charge'){
+      var loan = loans.find(function(l){ return l.id===tx.loanId; });
+      var lname = loan ? loan.name : '(deleted loan)';
+      return (
+      '<div class="row" data-id="'+tx.id+'">'+
+        '<div class="date-chip">'+shortDate(parseDate(tx.date))+'</div>'+
+        '<div class="row-info">'+
+          '<div class="name">'+escapeHtml(lname)+'</div>'+
+          '<div class="meta">'+(tx.note ? escapeHtml(tx.note) : 'Charged to loan')+'</div>'+
+        '</div>'+
+        '<div class="row-amt"><div class="amount negative">−₱'+peso(tx.amount)+'</div></div>'+
+        '<div class="row-actions"><button class="icon-btn danger" data-action="txn-delete" title="Delete" aria-label="Delete">'+ICON_TRASH+'</button></div>'+
+      '</div>');
+    }
+    var w = wallets.find(function(x){ return x.id===tx.walletId; });
+    var wname = w ? w.name : '(deleted wallet)';
+    var isAdd = tx.type==='add';
+    return (
+    '<div class="row" data-id="'+tx.id+'">'+
+      '<div class="date-chip">'+shortDate(parseDate(tx.date))+'</div>'+
+      '<div class="row-info">'+
+        '<div class="name">'+escapeHtml(wname)+'</div>'+
+        '<div class="meta">'+(tx.note ? escapeHtml(tx.note) : (isAdd?'Funds added':'Purchase'))+'</div>'+
+      '</div>'+
+      '<div class="row-amt"><div class="amount'+(isAdd?'':' negative')+'">'+(isAdd?'+':'−')+'₱'+peso(tx.amount)+'</div></div>'+
+      '<div class="row-actions"><button class="icon-btn danger" data-action="txn-delete" title="Delete" aria-label="Delete">'+ICON_TRASH+'</button></div>'+
+    '</div>');
+  }
+  function renderActivity(){
+    var el = document.getElementById('activity-list');
+    if(transactions.length===0){
+      el.innerHTML = '<div class="empty-state"><strong>No activity yet</strong>Add funds or log a purchase from a wallet above.</div>';
+      return;
+    }
+    var sorted = transactions.slice().sort(function(a,b){
+      var d = parseDate(b.date) - parseDate(a.date);
+      if(d!==0) return d;
+      return (b.ts||0) - (a.ts||0);
+    }).slice(0,15);
+    el.innerHTML = sorted.map(activityRowHtml).join('');
+  }
+
+  /* ---------- loans ---------- */
+  function loanMetaLine(loan){
+    var bits = [];
+    if(loan.platform) bits.push(loan.platform);
+    bits.push(cadenceText(loan));
+    if(loan.principal) bits.push('₱'+peso(loan.principal)+' original');
+    if(Number(loan.extraCharged)>0) bits.push('₱'+peso(loan.extraCharged)+' charged via expenses');
+    return bits.join(' · ');
+  }
+  function progressHtml(loan){
+    if(!hasTerm(loan)) return '<div class="progress-track"><div class="progress-fill" style="width:100%; background:var(--inset-3);"></div></div>';
+    var pct = Math.min(100, Math.round(((Number(loan.paid)||0)/Number(loan.term))*100));
+    return '<div class="progress-track"><div class="progress-fill" style="width:'+pct+'%"></div></div>';
+  }
+  function loanRowHtml(loan, dateOverride, isNext){
+    var st = statusOf(loan);
+    var d = dateOverride || nextDueDate(loan);
+    var markDisabled = isDone(loan) || (typeof isNext === 'boolean' ? !isNext : false);
+    var progressLabel = hasTerm(loan) ? ((Number(loan.paid)||0)+' of '+loan.term+' payments') : ((Number(loan.paid)||0)+' payments · ongoing');
+    return (
+    '<div class="row" data-id="'+loan.id+'">'+
+      '<div class="date-chip">'+shortDate(d)+'</div>'+
+      '<div class="row-info">'+
+        '<div class="name">'+escapeHtml(loan.name)+'</div>'+
+        '<div class="meta">'+escapeHtml(loanMetaLine(loan))+(loan.notes ? ' · '+escapeHtml(loan.notes) : '')+'</div>'+
+        progressHtml(loan)+
+        '<div class="progress-label">'+progressLabel+'</div>'+
+      '</div>'+
+      '<div class="row-amt">'+
+        '<div class="amount">₱'+peso(loan.amount)+cadenceLabel(loan)+'</div>'+
+        '<div class="remaining">'+(remainingBalance(loan)===null ? 'ongoing' : '₱'+peso(remainingBalance(loan))+' left')+'</div>'+
+        '<span class="pill '+st.cls+'">'+st.label+'</span>'+
+      '</div>'+
+      '<div class="row-actions">'+
+        '<button class="icon-btn confirm" data-action="mark" '+(markDisabled?'disabled':'')+' title="Mark paid" aria-label="Mark paid">'+ICON_CHECK+'</button>'+
+        '<button class="icon-btn" data-action="edit" title="Edit" aria-label="Edit">'+ICON_EDIT+'</button>'+
+        '<button class="icon-btn danger" data-action="delete" title="Delete" aria-label="Delete">'+ICON_TRASH+'</button>'+
+      '</div>'+
+    '</div>');
+  }
+  function renderDueList(){
+    var t = today();
+    document.getElementById('month-label').textContent = t.toLocaleString(undefined,{month:'long', year:'numeric'});
+    var monthEnd = new Date(t.getFullYear(), t.getMonth()+1, 0, 23,59,59);
+    var active = loans.filter(function(l){ return !isDone(l); });
+    var allEntries = [];
+    active.forEach(function(l){ monthDueEntries(l, monthEnd).forEach(function(e){ allEntries.push(e); }); });
+    allEntries.sort(function(a,b){ return a.date - b.date; });
+    var el = document.getElementById('due-list');
+    if(allEntries.length===0){
+      el.innerHTML = '<div class="empty-state"><strong>Nothing due yet</strong>Add a loan to start tracking it.</div>';
+      return;
+    }
+    el.innerHTML = allEntries.map(function(e){ return loanRowHtml(e.loan, e.date, e.isNext); }).join('');
+  }
+  function renderLoanList(){
+    var el = document.getElementById('loan-list');
+    if(loans.length===0){
+      el.innerHTML = '<div class="empty-state"><strong>No loans yet</strong>Tap the + button to record the first one.</div>';
+      return;
+    }
+    var sorted = loans.slice().sort(function(a,b){
+      if(isDone(a)!==isDone(b)) return isDone(a) ? 1 : -1;
+      return nextDueDate(a) - nextDueDate(b);
+    });
+    el.innerHTML = sorted.map(function(l){ return loanRowHtml(l, null, true); }).join('');
+  }
+  function renderBreakdown(){
+    var t = today();
+    var monthEnd = new Date(t.getFullYear(), t.getMonth()+1, 0, 23,59,59);
+    var groups = {};
+    loans.forEach(function(l){
+      var k = l.platform || 'Unspecified';
+      if(!groups[k]) groups[k] = {count:0, monthly:0, remaining:0};
+      groups[k].count++;
+      if(!isDone(l)) monthDueEntries(l, monthEnd).forEach(function(){ groups[k].monthly += Number(l.amount)||0; });
+      var rb = remainingBalance(l);
+      groups[k].remaining += (rb===null?0:rb);
+    });
+    var keys = Object.keys(groups).sort();
+    var section = document.getElementById('breakdown-section');
+    var body = document.getElementById('breakdown-body');
+    if(keys.length===0){ section.style.display='none'; return; }
+    section.style.display='';
+    var rows = '<div class="breakdown-row head"><span>Lender</span><span class="num">Loans</span><span class="num">Due this month</span><span class="num">Remaining</span></div>';
+    rows += keys.map(function(k){
+      var g = groups[k];
+      return '<div class="breakdown-row"><span>'+escapeHtml(k)+'</span><span class="num">'+g.count+'</span><span class="num">₱'+peso(g.monthly)+'</span><span class="num">₱'+peso(g.remaining)+'</span></div>';
+    }).join('');
+    body.innerHTML = rows;
+  }
+
+  function renderAll(){
+    renderStats(); renderCalendar(); renderDueList(); renderLoanList(); renderBreakdown();
+    renderWallets(); renderActivity(); renderLedgerSwitcherLabel();
+  }
+
+  /* ---------- calendar ---------- */
+  function monthLabelLong(y,m){ return new Date(y,m,1).toLocaleString(undefined,{month:'long', year:'numeric'}); }
+  function monthLabelShort(y,m){ return new Date(y,m,1).toLocaleString(undefined,{month:'short', year:'numeric'}); }
+  function calendarCells(y, m){
+    var startWeekday = new Date(y,m,1).getDay();
+    var daysInMonth = new Date(y,m+1,0).getDate();
+    var daysInPrev = new Date(y,m,0).getDate();
+    var total = Math.ceil((startWeekday+daysInMonth)/7)*7;
+    var cells = [];
+    for(var i=0;i<total;i++){
+      var dayNum = i - startWeekday + 1;
+      var date, inMonth;
+      if(dayNum < 1){ date = new Date(y, m-1, daysInPrev+dayNum); inMonth = false; }
+      else if(dayNum > daysInMonth){ date = new Date(y, m+1, dayNum-daysInMonth); inMonth = false; }
+      else { date = new Date(y, m, dayNum); inMonth = true; }
+      cells.push({date:date, inMonth:inMonth});
+    }
+    return cells;
+  }
+  function renderCalMain(y, m){
+    document.getElementById('cal-main-title').textContent = monthLabelLong(y,m);
+    var dueMap = dueMapForMonth(y,m);
+    var t = today();
+    var html = calendarCells(y,m).map(function(cell){
+      var names = cell.inMonth ? (dueMap[cell.date.getDate()]||[]) : [];
+      var isToday = cell.inMonth && cell.date.getTime()===t.getTime();
+      var dots = '';
+      if(names.length){
+        var shown = names.slice(0,4);
+        dots = '<div class="cal-dots">'+shown.map(function(){ return '<span class="cal-dot"></span>'; }).join('')+
+          (names.length>4 ? '<span class="cal-dot extra">+'+(names.length-4)+'</span>' : '')+'</div>';
+      }
+      return '<div class="cal-cell'+(cell.inMonth?'':' out')+(isToday?' today':'')+'"'+
+        (names.length?' title="'+escapeHtml(names.join(', '))+'"':'')+'>'+
+        '<div class="cal-daynum">'+cell.date.getDate()+'</div>'+dots+
+      '</div>';
+    }).join('');
+    document.getElementById('cal-main-grid').innerHTML = html;
+  }
+  function renderCalMini(idx, y, m){
+    document.getElementById('cal-mini-title-'+idx).textContent = monthLabelShort(y,m);
+    var dueMap = dueMapForMonth(y,m);
+    var t = today();
+    var html = calendarCells(y,m).map(function(cell){
+      if(!cell.inMonth) return '<div class="cal-mini-cell out"></div>';
+      var day = cell.date.getDate();
+      var isToday = cell.date.getTime()===t.getTime();
+      var has = !!(dueMap[day] && dueMap[day].length);
+      return '<div class="cal-mini-cell'+(isToday?' today':'')+(has?' due':'')+'"'+
+        (has?' title="'+escapeHtml(dueMap[day].join(', '))+'"':'')+'>'+day+'</div>';
+    }).join('');
+    document.getElementById('cal-mini-grid-'+idx).innerHTML = html;
+  }
+  function renderCalendar(){
+    var t = today();
+    renderCalMain(t.getFullYear(), t.getMonth());
+    for(var i=1;i<=3;i++){
+      var d = new Date(t.getFullYear(), t.getMonth()+i, 1);
+      renderCalMini(i, d.getFullYear(), d.getMonth());
+    }
+  }
+
+  /* ---------- segmented control (generic) ---------- */
+  function moveThumb(group, thumb){
+    var active = group.querySelector('.seg-btn.active');
+    if(!active) return;
+    thumb.style.width = active.offsetWidth+'px';
+    thumb.style.transform = 'translateX('+active.offsetLeft+'px)';
+  }
+
+  /* loan frequency segmented control */
+  var freqGroup = document.getElementById('freq-group');
+  var segThumb = document.getElementById('seg-thumb');
+  var fieldDueDay = document.getElementById('field-dueday');
+  var fieldInterval = document.getElementById('field-interval');
+  function setFrequency(val){
+    freqGroup.setAttribute('data-value', val);
+    Array.prototype.forEach.call(freqGroup.querySelectorAll('.seg-btn'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-value')===val);
+    });
+    moveThumb(freqGroup, segThumb);
+    if(val === 'monthly'){ fieldDueDay.classList.remove('hidden'); fieldInterval.classList.add('hidden'); }
+    else if(val === 'custom'){ fieldDueDay.classList.add('hidden'); fieldInterval.classList.remove('hidden'); }
+    else { fieldDueDay.classList.add('hidden'); fieldInterval.classList.add('hidden'); }
+  }
+  Array.prototype.forEach.call(freqGroup.querySelectorAll('.seg-btn'), function(b){
+    b.addEventListener('click', function(){ setFrequency(b.getAttribute('data-value')); });
+  });
+
+  /* theme segmented control */
+  var themeGroup = document.getElementById('theme-group');
+  var themeThumb = document.getElementById('theme-thumb');
+  function setTheme(val){
+    document.documentElement.setAttribute('data-theme', val);
+    try{ localStorage.setItem(THEME_KEY, val); }catch(e){}
+    themeGroup.setAttribute('data-value', val);
+    Array.prototype.forEach.call(themeGroup.querySelectorAll('.seg-btn'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-value')===val);
+    });
+    moveThumb(themeGroup, themeThumb);
+  }
+  Array.prototype.forEach.call(themeGroup.querySelectorAll('.seg-btn'), function(b){
+    b.addEventListener('click', function(){ setTheme(b.getAttribute('data-value')); });
+  });
+
+  /* tab segmented control */
+  var tabGroup = document.getElementById('tab-group');
+  var tabThumb = document.getElementById('tab-thumb');
+  function setTab(val){
+    tabGroup.setAttribute('data-value', val);
+    Array.prototype.forEach.call(tabGroup.querySelectorAll('.seg-btn'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-value')===val);
+    });
+    moveThumb(tabGroup, tabThumb);
+    document.getElementById('tab-wallet').style.display = val==='wallet' ? '' : 'none';
+    document.getElementById('tab-loans').style.display = val==='loans' ? '' : 'none';
+  }
+  Array.prototype.forEach.call(tabGroup.querySelectorAll('.seg-btn'), function(b){
+    b.addEventListener('click', function(){ setTab(b.getAttribute('data-value')); });
+  });
+
+  /* transaction type segmented control */
+  var txnTypeGroup = document.getElementById('txn-type-group');
+  var txnTypeThumb = document.getElementById('txn-type-thumb');
+  var fieldTxnDest = document.getElementById('field-txn-dest');
+  var fieldTxnLoan = document.getElementById('field-txn-loan');
+  var fieldTxnWallet = document.getElementById('field-txn-wallet');
+  function setTxnType(val){
+    txnTypeGroup.setAttribute('data-value', val);
+    Array.prototype.forEach.call(txnTypeGroup.querySelectorAll('.seg-btn'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-value')===val);
+    });
+    moveThumb(txnTypeGroup, txnTypeThumb);
+    if(val === 'spend'){
+      fieldTxnDest.classList.remove('hidden');
+      requestAnimationFrame(function(){ moveThumb(txnDestGroup, txnDestThumb); });
+    }else{
+      fieldTxnDest.classList.add('hidden');
+      setTxnDest('wallet');
+    }
+  }
+  Array.prototype.forEach.call(txnTypeGroup.querySelectorAll('.seg-btn'), function(b){
+    b.addEventListener('click', function(){ setTxnType(b.getAttribute('data-value')); });
+  });
+
+  /* transaction destination segmented control (wallet vs loan) */
+  var txnDestGroup = document.getElementById('txn-dest-group');
+  var txnDestThumb = document.getElementById('txn-dest-thumb');
+  function setTxnDest(val){
+    txnDestGroup.setAttribute('data-value', val);
+    Array.prototype.forEach.call(txnDestGroup.querySelectorAll('.seg-btn'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-value')===val);
+    });
+    moveThumb(txnDestGroup, txnDestThumb);
+    fieldTxnLoan.classList.toggle('hidden', val!=='loan');
+    fieldTxnWallet.classList.toggle('hidden', val==='loan');
+  }
+  Array.prototype.forEach.call(txnDestGroup.querySelectorAll('.seg-btn'), function(b){
+    b.addEventListener('click', function(){ setTxnDest(b.getAttribute('data-value')); });
+  });
+  function populateLoanSelect(){
+    var sel = document.getElementById('txn-loan-select');
+    if(loans.length===0){
+      sel.innerHTML = '<option value="">No loans yet — add one first</option>';
+    }else{
+      sel.innerHTML = loans.map(function(l){ return '<option value="'+l.id+'">'+escapeHtml(l.name)+'</option>'; }).join('');
+    }
+  }
+  function populateWalletSelect(preselectId){
+    var sel = document.getElementById('txn-wallet-select');
+    if(wallets.length===0){
+      sel.innerHTML = '<option value="">No wallets yet — add one first</option>';
+    }else{
+      sel.innerHTML = wallets.map(function(w){ return '<option value="'+w.id+'">'+escapeHtml(w.name)+'</option>'; }).join('');
+      if(preselectId) sel.value = preselectId;
+    }
+  }
+
+  window.addEventListener('resize', function(){
+    moveThumb(freqGroup, segThumb);
+    moveThumb(themeGroup, themeThumb);
+    moveThumb(tabGroup, tabThumb);
+    moveThumb(txnTypeGroup, txnTypeThumb);
+    moveThumb(txnDestGroup, txnDestThumb);
+  });
+
+  /* ---------- popovers ---------- */
+  function closeAllPopovers(){
+    Array.prototype.forEach.call(document.querySelectorAll('.popover-menu.open'), function(m){ m.classList.remove('open'); });
+  }
+  function togglePopover(el){
+    var wasOpen = el.classList.contains('open');
+    closeAllPopovers();
+    if(!wasOpen) el.classList.add('open');
+  }
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('.menu-wrap')) closeAllPopovers();
+  });
+
+  /* ---------- ledger switcher ---------- */
+  function renderLedgerSwitcherLabel(){
+    var l = index.ledgers.find(function(x){ return x.id===index.activeId; });
+    document.getElementById('active-ledger-name').textContent = l ? l.name : 'Ledger';
+  }
+  function renderLedgerMenu(){
+    var html = index.ledgers.map(function(l){
+      var isActive = l.id===index.activeId;
+      return '<div class="popover-row'+(isActive?' active':'')+'" data-id="'+l.id+'">'+
+        '<button type="button" class="popover-item" data-action="switch-ledger">'+(isActive?'✓ ':'')+escapeHtml(l.name)+'</button>'+
+        '<button type="button" class="popover-icon-btn" data-action="rename-ledger" title="Rename" aria-label="Rename">'+ICON_EDIT+'</button>'+
+        '<button type="button" class="popover-icon-btn" data-action="delete-ledger" title="Delete" aria-label="Delete" '+(index.ledgers.length<=1?'disabled':'')+'>'+ICON_TRASH+'</button>'+
+      '</div>';
+    }).join('');
+    html += '<div class="popover-divider"></div>';
+    html += '<button type="button" class="popover-item" id="btn-new-ledger" style="width:100%; text-align:left;">+ New ledger</button>';
+    document.getElementById('ledger-menu').innerHTML = html;
+  }
+  function switchLedger(id){
+    if(id===index.activeId) return;
+    persist();
+    index.activeId = id; saveIndex();
+    var data = loadLedger(id) || {loans:[], wallets:[], transactions:[]};
+    loans = data.loans || []; wallets = data.wallets || []; transactions = data.transactions || [];
+    renderAll();
+  }
+  function newLedger(){
+    var name = prompt('Name for the new ledger (e.g. "Mom"):', '');
+    if(name===null) return;
+    name = name.trim() || 'Untitled';
+    var id = uid();
+    index.ledgers.push({id:id, name:name});
+    saveIndex();
+    saveLedgerRaw(id, {loans:[], wallets:[], transactions:[]});
+    switchLedger(id);
+    renderLedgerMenu();
+    showToast('Created "'+name+'"');
+  }
+  function renameLedger(id){
+    var l = index.ledgers.find(function(x){ return x.id===id; });
+    if(!l) return;
+    var name = prompt('Rename ledger:', l.name);
+    if(name===null) return;
+    name = name.trim();
+    if(!name) return;
+    l.name = name; saveIndex();
+    renderLedgerMenu(); renderLedgerSwitcherLabel();
+  }
+  function deleteLedger(id){
+    if(index.ledgers.length<=1) return;
+    var l = index.ledgers.find(function(x){ return x.id===id; });
+    if(!l) return;
+    if(!confirm('Delete ledger "'+l.name+'" and all its data? This cannot be undone.')) return;
+    index.ledgers = index.ledgers.filter(function(x){ return x.id!==id; });
+    try{ localStorage.removeItem(ledgerKey(id)); }catch(e){}
+    if(index.activeId===id) index.activeId = index.ledgers[0].id;
+    saveIndex();
+    var data = loadLedger(index.activeId) || {loans:[], wallets:[], transactions:[]};
+    loans = data.loans || []; wallets = data.wallets || []; transactions = data.transactions || [];
+    renderLedgerMenu();
+    renderAll();
+    showToast('Ledger deleted');
+  }
+
+  document.getElementById('btn-ledger-switch').addEventListener('click', function(e){
+    e.stopPropagation();
+    renderLedgerMenu();
+    togglePopover(document.getElementById('ledger-menu'));
+  });
+  document.getElementById('ledger-menu').addEventListener('click', function(e){
+    if(e.target.closest('#btn-new-ledger')){ newLedger(); return; }
+    var actionBtn = e.target.closest('[data-action]');
+    if(!actionBtn) return;
+    var row = actionBtn.closest('.popover-row');
+    var id = row && row.getAttribute('data-id');
+    var action = actionBtn.getAttribute('data-action');
+    if(action==='switch-ledger'){ switchLedger(id); closeAllPopovers(); renderLedgerMenu(); }
+    else if(action==='rename-ledger'){ renameLedger(id); }
+    else if(action==='delete-ledger'){ deleteLedger(id); }
+  });
+
+  /* ---------- more menu: backup / restore ---------- */
+  document.getElementById('btn-more-menu').addEventListener('click', function(e){
+    e.stopPropagation();
+    togglePopover(document.getElementById('more-menu'));
+  });
+  document.getElementById('btn-backup').addEventListener('click', function(){
+    persist();
+    var payload = {index:index, ledgers:{}};
+    index.ledgers.forEach(function(l){ payload.ledgers[l.id] = loadLedger(l.id) || {loans:[], wallets:[], transactions:[]}; });
+    var blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'ledger-backup.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    closeAllPopovers();
+  });
+  document.getElementById('btn-restore').addEventListener('click', function(){
+    document.getElementById('restore-input').click();
+    closeAllPopovers();
+  });
+  document.getElementById('restore-input').addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var payload = JSON.parse(reader.result);
+        if(!payload || !payload.index || !payload.ledgers) throw new Error('bad format');
+        if(!confirm('Restore from backup? This replaces all ledgers currently on this device.')) return;
+        index.ledgers.forEach(function(l){ try{ localStorage.removeItem(ledgerKey(l.id)); }catch(err){} });
+        index = payload.index;
+        saveIndex();
+        Object.keys(payload.ledgers).forEach(function(id){ saveLedgerRaw(id, payload.ledgers[id]); });
+        if(!index.ledgers.some(function(l){ return l.id===index.activeId; })){ index.activeId = index.ledgers[0].id; }
+        var data = loadLedger(index.activeId) || {loans:[], wallets:[], transactions:[]};
+        loans = data.loans || []; wallets = data.wallets || []; transactions = data.transactions || [];
+        renderAll();
+        showToast('Backup restored');
+      }catch(err){
+        alert('Could not read that backup file.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  /* ---------- loan sheet ---------- */
+  var backdrop = document.getElementById('sheet-backdrop');
+  var form = document.getElementById('loan-form');
+  var editingId = null;
+  var btnDelete = document.getElementById('btn-delete-loan');
+
+  function openForm(loan){
+    editingId = loan ? loan.id : null;
+    document.getElementById('sheet-title').textContent = loan ? 'Edit loan' : 'Add a loan';
+    document.getElementById('btn-submit-loan').textContent = loan ? 'Save changes' : 'Add loan';
+    btnDelete.style.display = loan ? '' : 'none';
+
+    document.getElementById('f-name').value = loan ? loan.name : '';
+    document.getElementById('f-platform').value = loan ? loan.platform : '';
+    document.getElementById('f-principal').value = loan ? loan.principal : '';
+    document.getElementById('f-amount').value = loan ? loan.amount : '';
+    document.getElementById('f-start').value = loan ? loan.start : '';
+    document.getElementById('f-term').value = loan && loan.term ? loan.term : '';
+    document.getElementById('f-paid').value = loan ? loan.paid : 0;
+    document.getElementById('f-notes').value = loan ? loan.notes : '';
+
+    if(loan && loan.frequency==='monthly'){
+      document.getElementById('f-dueday').value = loan.dueDay || '';
+      document.getElementById('f-interval').value = '';
+      setFrequency('monthly');
+    }else if(loan && (loan.intervalDays===14 || loan.intervalDays===15)){
+      document.getElementById('f-interval').value = '';
+      setFrequency(String(loan.intervalDays));
+    }else if(loan){
+      document.getElementById('f-interval').value = loan.intervalDays || '';
+      setFrequency('custom');
+    }else{
+      document.getElementById('f-dueday').value = '';
+      document.getElementById('f-interval').value = '';
+      setFrequency('monthly');
+    }
+
+    backdrop.classList.add('open');
+    requestAnimationFrame(function(){ moveThumb(freqGroup, segThumb); });
+    document.getElementById('f-name').focus();
+  }
+  function closeForm(){ backdrop.classList.remove('open'); form.reset(); editingId = null; }
+  document.getElementById('btn-toggle-form').addEventListener('click', function(){ openForm(null); });
+  document.getElementById('btn-cancel-form').addEventListener('click', closeForm);
+  backdrop.addEventListener('click', function(e){ if(e.target === backdrop) closeForm(); });
+
+  btnDelete.addEventListener('click', function(){
+    if(!editingId) return;
+    var loan = loans.find(function(l){ return l.id===editingId; });
+    if(loan && confirm('Delete "'+loan.name+'"? This cannot be undone.')){
+      loans = loans.filter(function(l){ return l.id!==editingId; });
+      persist();
+      showToast('Loan deleted');
+      closeForm();
+      renderAll();
+    }
+  });
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var freqVal = freqGroup.getAttribute('data-value');
+    var frequency, dueDay, intervalDays;
+    if(freqVal === 'monthly'){
+      frequency = 'monthly';
+      dueDay = Math.min(31, Math.max(1, parseInt(document.getElementById('f-dueday').value)||1));
+      intervalDays = null;
+    }else{
+      frequency = 'days';
+      dueDay = null;
+      intervalDays = freqVal === 'custom'
+        ? Math.max(1, parseInt(document.getElementById('f-interval').value)||14)
+        : parseInt(freqVal,10);
+    }
+    var data = {
+      id: editingId || uid(),
+      name: document.getElementById('f-name').value.trim(),
+      platform: document.getElementById('f-platform').value.trim(),
+      principal: parseFloat(document.getElementById('f-principal').value)||0,
+      amount: parseFloat(document.getElementById('f-amount').value)||0,
+      frequency: frequency,
+      dueDay: dueDay,
+      intervalDays: intervalDays,
+      start: document.getElementById('f-start').value,
+      term: parseInt(document.getElementById('f-term').value)||0,
+      paid: parseInt(document.getElementById('f-paid').value)||0,
+      notes: document.getElementById('f-notes').value.trim()
+    };
+    if(!data.name){ return; }
+    if(editingId){
+      var idx = loans.findIndex(function(l){ return l.id===editingId; });
+      loans[idx] = data;
+      showToast('Loan updated');
+    }else{
+      loans.push(data);
+      showToast('Loan added');
+    }
+    persist();
+    closeForm();
+    renderAll();
+  });
+
+  /* ---------- wallet sheet ---------- */
+  var walletBackdrop = document.getElementById('wallet-sheet-backdrop');
+  var walletForm = document.getElementById('wallet-form');
+  var editingWalletId = null;
+  var btnDeleteWallet = document.getElementById('btn-delete-wallet');
+  var walletBalanceField = document.getElementById('w-field-balance');
+
+  function openWalletForm(w){
+    editingWalletId = w ? w.id : null;
+    document.getElementById('wallet-sheet-title').textContent = w ? 'Edit wallet' : 'Add a wallet';
+    document.getElementById('btn-submit-wallet').textContent = w ? 'Save changes' : 'Add wallet';
+    btnDeleteWallet.style.display = w ? '' : 'none';
+    document.getElementById('w-name').value = w ? w.name : '';
+    document.getElementById('w-platform').value = w ? w.platform : '';
+    document.getElementById('w-notes').value = w ? w.notes : '';
+    document.getElementById('w-balance').value = '';
+    walletBalanceField.style.display = w ? 'none' : '';
+    walletBackdrop.classList.add('open');
+    document.getElementById('w-name').focus();
+  }
+  function closeWalletForm(){ walletBackdrop.classList.remove('open'); walletForm.reset(); editingWalletId = null; }
+  document.getElementById('btn-add-wallet').addEventListener('click', function(){ openWalletForm(null); });
+  document.getElementById('btn-cancel-wallet-form').addEventListener('click', closeWalletForm);
+  walletBackdrop.addEventListener('click', function(e){ if(e.target === walletBackdrop) closeWalletForm(); });
+
+  btnDeleteWallet.addEventListener('click', function(){
+    if(!editingWalletId) return;
+    var w = wallets.find(function(x){ return x.id===editingWalletId; });
+    if(w && confirm('Delete wallet "'+w.name+'"? Its transaction history will also be removed.')){
+      wallets = wallets.filter(function(x){ return x.id!==editingWalletId; });
+      transactions = transactions.filter(function(t){ return t.walletId!==editingWalletId; });
+      persist();
+      showToast('Wallet deleted');
+      closeWalletForm();
+      renderAll();
+    }
+  });
+
+  walletForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = document.getElementById('w-name').value.trim();
+    if(!name) return;
+    var platform = document.getElementById('w-platform').value.trim();
+    var notes = document.getElementById('w-notes').value.trim();
+    if(editingWalletId){
+      var w = wallets.find(function(x){ return x.id===editingWalletId; });
+      w.name = name; w.platform = platform; w.notes = notes;
+      showToast('Wallet updated');
+    }else{
+      var startBal = parseFloat(document.getElementById('w-balance').value)||0;
+      var id = uid();
+      wallets.push({id:id, name:name, platform:platform, notes:notes, balance:startBal});
+      if(startBal !== 0){
+        transactions.push({id:uid(), walletId:id, type:'add', amount:Math.abs(startBal), note:'Starting balance', date:todayStr(), ts:Date.now()});
+      }
+      showToast('Wallet added');
+    }
+    persist();
+    closeWalletForm();
+    renderAll();
+  });
+
+  /* ---------- transaction sheet ---------- */
+  var txnBackdrop = document.getElementById('txn-sheet-backdrop');
+  var txnForm = document.getElementById('txn-form');
+
+  function openTxnForm(opts){
+    opts = opts || {};
+    var type = opts.type || 'add';
+    document.getElementById('txn-sheet-title').textContent = type==='spend' ? 'Log an expense' : 'Add balance';
+    document.getElementById('txn-amount').value = '';
+    document.getElementById('txn-note').value = '';
+    document.getElementById('txn-date').value = todayStr();
+    populateLoanSelect();
+    populateWalletSelect(opts.walletId);
+    setTxnDest('wallet');
+    setTxnType(type);
+    txnBackdrop.classList.add('open');
+    requestAnimationFrame(function(){ moveThumb(txnTypeGroup, txnTypeThumb); moveThumb(txnDestGroup, txnDestThumb); });
+    document.getElementById('txn-amount').focus();
+  }
+  function closeTxnForm(){ txnBackdrop.classList.remove('open'); txnForm.reset(); }
+  document.getElementById('btn-cancel-txn-form').addEventListener('click', closeTxnForm);
+  txnBackdrop.addEventListener('click', function(e){ if(e.target === txnBackdrop) closeTxnForm(); });
+  document.getElementById('btn-quick-add').addEventListener('click', function(){ openTxnForm({type:'add'}); });
+  document.getElementById('btn-quick-spend').addEventListener('click', function(){ openTxnForm({type:'spend'}); });
+
+  txnForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var amount = parseFloat(document.getElementById('txn-amount').value)||0;
+    if(amount<=0) return;
+    var type = txnTypeGroup.getAttribute('data-value');
+    var note = document.getElementById('txn-note').value.trim();
+    var date = document.getElementById('txn-date').value || todayStr();
+
+    if(type==='spend' && txnDestGroup.getAttribute('data-value')==='loan'){
+      var loanId = document.getElementById('txn-loan-select').value;
+      var loan = loans.find(function(l){ return l.id===loanId; });
+      if(!loan){ alert('Pick a loan to charge this to.'); return; }
+      loan.extraCharged = (Number(loan.extraCharged)||0) + amount;
+      transactions.push({id:uid(), walletId:null, loanId:loan.id, type:'charge', amount:amount, note:note, date:date, ts:Date.now()});
+      persist();
+      showToast('Charged ₱'+peso(amount)+' to '+loan.name);
+    }else{
+      var walletId = document.getElementById('txn-wallet-select').value;
+      var w = wallets.find(function(x){ return x.id===walletId; });
+      if(!w){ alert('Pick a wallet first.'); return; }
+      w.balance = (Number(w.balance)||0) + (type==='add' ? amount : -amount);
+      transactions.push({id:uid(), walletId:w.id, loanId:null, type:type, amount:amount, note:note, date:date, ts:Date.now()});
+      persist();
+      showToast(type==='add' ? 'Funds added to '+w.name : 'Purchase logged for '+w.name);
+    }
+    closeTxnForm();
+    renderAll();
+  });
+
+  /* ---------- global escape key ---------- */
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape') return;
+    if(backdrop.classList.contains('open')) closeForm();
+    if(walletBackdrop.classList.contains('open')) closeWalletForm();
+    if(txnBackdrop.classList.contains('open')) closeTxnForm();
+    closeAllPopovers();
+  });
+
+  /* ---------- row actions (delegated) ---------- */
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-action]');
+    if(!btn) return;
+    var row = btn.closest('.row');
+    if(!row) return;
+    var id = row.getAttribute('data-id');
+    var action = btn.getAttribute('data-action');
+
+    if(row.closest('#wallet-list')){
+      var w = wallets.find(function(x){ return x.id===id; });
+      if(!w) return;
+      if(action==='wallet-add'){ openTxnForm({type:'add', walletId:w.id}); }
+      else if(action==='wallet-spend'){ openTxnForm({type:'spend', walletId:w.id}); }
+      else if(action==='wallet-edit'){ openWalletForm(w); }
+      else if(action==='wallet-delete'){
+        if(confirm('Delete wallet "'+w.name+'"? Its transaction history will also be removed.')){
+          wallets = wallets.filter(function(x){ return x.id!==id; });
+          transactions = transactions.filter(function(t){ return t.walletId!==id; });
+          persist(); showToast('Wallet deleted'); renderAll();
+        }
+      }
+      return;
+    }
+
+    if(row.closest('#activity-list')){
+      if(action==='txn-delete'){
+        var tx = transactions.find(function(t){ return t.id===id; });
+        if(!tx) return;
+        if(confirm('Delete this transaction? '+(tx.type==='charge' ? "The loan's balance" : 'The wallet balance')+' will be adjusted back.')){
+          if(tx.type==='charge'){
+            var loan2 = loans.find(function(l){ return l.id===tx.loanId; });
+            if(loan2){ loan2.extraCharged = (Number(loan2.extraCharged)||0) - tx.amount; }
+          }else{
+            var w2 = wallets.find(function(x){ return x.id===tx.walletId; });
+            if(w2){ w2.balance = (Number(w2.balance)||0) + (tx.type==='add' ? -tx.amount : tx.amount); }
+          }
+          transactions = transactions.filter(function(t){ return t.id!==id; });
+          persist(); showToast('Transaction removed'); renderAll();
+        }
+      }
+      return;
+    }
+
+    var loan = loans.find(function(l){ return l.id===id; });
+    if(!loan) return;
+    if(action==='edit'){ openForm(loan); }
+    else if(action==='delete'){
+      if(confirm('Delete "'+loan.name+'"? This cannot be undone.')){
+        loans = loans.filter(function(l){ return l.id!==id; });
+        persist(); showToast('Loan deleted'); renderAll();
+      }
+    }else if(action==='mark'){
+      loan.paid = (Number(loan.paid)||0) + 1;
+      persist(); showToast('Marked next payment paid'); renderAll();
+    }
+  });
+
+  /* ---------- toast ---------- */
+  var toastTimer;
+  function showToast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2200);
+  }
+
+  /* ---------- init ---------- */
+  setFrequency('monthly');
+  setTxnType('add');
+  setTab('wallet');
+  var storedTheme = null;
+  try{ storedTheme = localStorage.getItem(THEME_KEY); }catch(e){}
+  setTheme(storedTheme || 'light');
+  renderAll();
+})();
+</script>
+<script>
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
+</script>
+</body>
+</html>
