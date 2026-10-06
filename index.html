@@ -508,6 +508,19 @@ body, .glass, .glass::after{transition:none;}
 .sv-row.funds .r{color:var(--teal);}
 .sv-note{font-size:.74rem; color:var(--text-faint);}
 </style>
+<style id="sheet-fix">
+.sheet-backdrop{align-items:flex-start !important; overscroll-behavior:contain;}
+.sheet{margin:auto 0; max-height:calc(100dvh - 48px); overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;}
+.sheet-head{position:sticky; top:0; z-index:6; margin:-24px -22px 18px; padding:24px 26px 12px; background:linear-gradient(var(--mat-strong) 78%, transparent);}
+.form-actions{position:sticky; bottom:0; z-index:6; margin:22px -22px -22px; padding:14px 22px 22px; background:linear-gradient(transparent, var(--mat-strong) 30%);}
+@media (max-width:640px){
+  .sheet-backdrop{padding:6dvh 0 0 !important;}
+  .sheet{margin:auto 0 0; max-height:94dvh; border-radius:30px 30px 0 0;}
+  .sheet::before{display:none;}
+  .sheet-head{margin:-14px -18px 14px; padding:16px 22px 10px;}
+  .form-actions{margin:18px -18px calc(-24px - env(safe-area-inset-bottom)); padding:12px 18px calc(18px + env(safe-area-inset-bottom));}
+}
+</style>
 </head>
 <body>
 
@@ -2151,6 +2164,48 @@ body, .glass, .glass::after{transition:none;}
       var i = new Image(); i.decoding = 'async'; i.src = s; if(i.decode) i.decode().catch(function(){});
       (window.__bgKeep = window.__bgKeep || []).push(i);
     });
+  });
+})();
+</script>
+<script>
+(function(){
+  var stack = [], ignore = 0, lastBack = 0;
+  var SHEETS = {'sheet-backdrop':'btn-cancel-form', 'wallet-sheet-backdrop':'btn-cancel-wallet-form', 'txn-sheet-backdrop':'btn-cancel-txn-form'};
+  var closers = {};
+  function opened(key, closer){ if(stack.indexOf(key) !== -1) return; stack.push(key); closers[key] = closer; history.pushState({ledger:key}, ''); }
+  function closed(key){ var i = stack.indexOf(key); if(i === -1) return; stack.splice(i, 1); if(!closers.__fromPop){ ignore++; history.back(); } }
+  Object.keys(SHEETS).forEach(function(id){
+    var el = document.getElementById(id); if(!el) return;
+    var was = el.classList.contains('open');
+    new MutationObserver(function(){ var now = el.classList.contains('open'); if(now === was) return; was = now;
+      if(now) opened(id, function(){ document.getElementById(SHEETS[id]).click(); }); else closed(id); }).observe(el, {attributes:true, attributeFilter:['class']});
+  });
+  ['ledger-menu','more-menu'].forEach(function(id){
+    var el = document.getElementById(id); if(!el) return;
+    var was = false;
+    new MutationObserver(function(){ var now = el.classList.contains('open'); if(now === was) return; was = now;
+      if(now) opened(id, function(){ el.classList.remove('open'); }); else closed(id); }).observe(el, {attributes:true, attributeFilter:['class']});
+  });
+  var tg = document.getElementById('tab-group');
+  if(tg){ var tv = tg.getAttribute('data-value');
+    new MutationObserver(function(){ var v = tg.getAttribute('data-value'); if(v === tv) return; tv = v;
+      if(v === 'loans') opened('tab', function(){ tg.querySelector('.seg-btn[data-value="wallet"]').click(); }); else closed('tab'); }).observe(tg, {attributes:true, attributeFilter:['data-value']});
+  }
+  history.replaceState({ledger:'root'}, '');
+  document.addEventListener('pointerdown', function g(){ if(history.state && history.state.ledger === 'root') history.pushState({ledger:'guard'}, ''); document.removeEventListener('pointerdown', g, true); }, true);
+  window.addEventListener('popstate', function(){
+    if(ignore > 0){ ignore--; return; }
+    if(stack.length){
+      var key = stack.pop(), fn = closers[key];
+      closers.__fromPop = true; try{ fn && fn(); } finally { closers.__fromPop = false; }
+      return;
+    }
+    var now = Date.now();
+    if(now - lastBack < 2000){ history.back(); return; }
+    lastBack = now;
+    history.pushState({ledger:'guard'}, '');
+    var t = document.getElementById('toast');
+    if(t){ t.textContent = 'Press back again to exit'; t.classList.add('show'); clearTimeout(t.__h); t.__h = setTimeout(function(){ t.classList.remove('show'); }, 2000); }
   });
 })();
 </script>

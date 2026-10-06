@@ -1,4 +1,4 @@
-var CACHE = 'ledger-app-v7';
+var CACHE = 'ledger-app-v8';
 var ASSETS = [
   './',
   './index.html',
