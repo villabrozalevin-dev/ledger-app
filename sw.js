@@ -1,11 +1,14 @@
-var CACHE = 'ledger-app-v3';
+var CACHE = 'ledger-app-v4';
 var ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/icon-512-maskable.png',
+  './icons/icon-512-maskable.png'
+];
+// Optional files: a missing one must never block the update.
+var EXTRAS = [
   './backgrounds/marble-light.jpg',
   './backgrounds/marble-dark.jpg',
   './backgrounds/beach-day.jpg',
@@ -13,7 +16,9 @@ var ASSETS = [
 ];
 
 self.addEventListener('install', function(e){
-  e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(ASSETS); }));
+  e.waitUntil(caches.open(CACHE).then(function(c){
+    return Promise.all(ASSETS.concat(EXTRAS).map(function(u){ return c.add(u).catch(function(){}); }));
+  }));
   self.skipWaiting();
 });
 
