@@ -469,6 +469,12 @@ html:not(.lg-refract) .glass:not(.sheet):not(.popover-menu):not(.dock-fab), html
 .card-picker-actions{display:flex; flex-direction:column; gap:8px; align-items:flex-start;}
 #w-card-remove[hidden]{display:none;}
 </style>
+<style id="perf">
+html.switching *, html.switching *::before, html.switching *::after{transition:none !important; animation:none !important;}
+.bg{contain:strict; transform:translateZ(0); will-change:transform; backface-visibility:hidden;}
+body, .glass, .glass::after{transition:none;}
+.glass:hover::after{transition:opacity .3s ease;}
+</style>
 </head>
 <body>
 
@@ -1873,7 +1879,7 @@ html:not(.lg-refract) .glass:not(.sheet):not(.popover-menu):not(.dock-fab), html
     return {d:d, nx:nx, ny:ny};
   }
   function mapURL(w, h, r, bezel){
-    var s = 0.5, W = Math.max(2, Math.round(w*s)), H = Math.max(2, Math.round(h*s));
+    var s = (window.matchMedia && matchMedia('(pointer:coarse)').matches) ? 0.33 : 0.5, W = Math.max(2, Math.round(w*s)), H = Math.max(2, Math.round(h*s));
     var c = document.createElement('canvas'); c.width = W; c.height = H;
     var ctx = c.getContext('2d'), img = ctx.createImageData(W, H), a = img.data;
     for(var y=0; y<H; y++){ for(var x=0; x<W; x++){
@@ -1991,10 +1997,27 @@ html:not(.lg-refract) .glass:not(.sheet):not(.popover-menu):not(.dock-fab), html
   document.getElementById('bg-custom-change').addEventListener('click', function(e){ e.stopPropagation(); bgInput.click(); });
   bgInput.addEventListener('change', function(){
     var f = bgInput.files[0]; if(!f) return;
-    shrink(f, 2000).then(function(d){ custom = d; M.set('bg:custom', d); window.__setBg('custom'); applyCustom(); }).catch(function(){ alert('Could not read that image.'); });
+    shrink(f, 2000).then(function(d){ M.set('bg:custom', d); return fetch(d).then(function(r){ return r.blob(); }); }).then(function(bl){ if(custom && custom.indexOf('blob:')===0) URL.revokeObjectURL(custom); custom = URL.createObjectURL(bl); window.__setBg('custom'); applyCustom(); }).catch(function(){ alert('Could not read that image.'); });
     bgInput.value = '';
   });
-  M.get('bg:custom').then(function(d){ custom = d || null; if(!custom && root.getAttribute('data-bg') === 'custom') window.__setBg('grid'); applyCustom(); }).catch(function(){});
+  M.get('bg:custom').then(function(d){ return d ? fetch(d).then(function(r){ return r.blob(); }).then(function(b){ return URL.createObjectURL(b); }) : null; }).then(function(d){ custom = d || null; if(!custom && root.getAttribute('data-bg') === 'custom') window.__setBg('grid'); applyCustom(); }).catch(function(){});
+})();
+</script>
+<script>
+(function(){
+  var root = document.documentElement, t1, t2;
+  new MutationObserver(function(){
+    root.classList.add('switching');
+    cancelAnimationFrame(t1); cancelAnimationFrame(t2);
+    t1 = requestAnimationFrame(function(){ t2 = requestAnimationFrame(function(){ root.classList.remove('switching'); }); });
+  }).observe(root, {attributes:true, attributeFilter:['data-theme','data-bg']});
+  var idle = window.requestIdleCallback || function(f){ return setTimeout(f, 800); };
+  idle(function(){
+    ['backgrounds/marble-light.jpg','backgrounds/marble-dark.jpg','backgrounds/beach-day.jpg','backgrounds/beach-night.jpg'].forEach(function(s){
+      var i = new Image(); i.decoding = 'async'; i.src = s; if(i.decode) i.decode().catch(function(){});
+      (window.__bgKeep = window.__bgKeep || []).push(i);
+    });
+  });
 })();
 </script>
 <script>
