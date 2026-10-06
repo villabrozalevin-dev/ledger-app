@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ledger — Wallet &amp; Loans</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#a8791f">
+<meta name="theme-color" content="#2c2e33">
 <link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Ledger">
@@ -475,6 +475,39 @@ html.switching *, html.switching *::before, html.switching *::after{transition:n
 body, .glass, .glass::after{transition:none;}
 .glass:hover::after{transition:opacity .3s ease;}
 </style>
+<style id="savings">
+.savings-card{border-radius:32px; padding:22px 24px 18px; display:flex; flex-direction:column; gap:14px;}
+.savings-card [hidden]{display:none !important;}
+.sv-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+.sv-label{font-size:.9rem; color:var(--text-dim); font-weight:550;}
+.sv-amount{font-size:clamp(2.4rem, 8vw, 3.2rem); font-weight:800; letter-spacing:-.04em; line-height:1.05;}
+.sv-amount small{font-size:1rem; font-weight:600; color:var(--text-dim); letter-spacing:0; margin-left:4px;}
+.sv-week{font-size:1.05rem; font-weight:650; text-align:right;}
+.sv-week span{display:block; font-size:.76rem; font-weight:550; color:var(--text-dim);}
+.sv-sub{font-size:.86rem; color:var(--text-dim); text-wrap:pretty; margin-top:-4px;}
+.sv-alert{font-size:.84rem; font-weight:600; color:var(--red); background:rgba(var(--red-rgb),.12); padding:9px 13px; border-radius:14px;}
+.sv-controls{display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
+.sv-chip{display:inline-flex; align-items:center; gap:9px; padding:7px 12px 7px 8px; border-radius:999px; background:var(--inset-1); box-shadow:inset 0 0 0 1px var(--hairline); font-size:.82rem; font-weight:600; color:var(--text); cursor:pointer; user-select:none;}
+.sv-chip input[type="checkbox"]{position:absolute; opacity:0; pointer-events:none;}
+.sv-track{width:34px; height:20px; border-radius:999px; background:var(--inset-3); position:relative; flex:none; transition:background .2s ease;}
+.sv-track::after{content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3); transition:transform .35s var(--spring);}
+.sv-chip input:checked + .sv-track{background:var(--accent-btn);}
+.sv-chip input:checked + .sv-track::after{transform:translateX(14px);}
+.sv-chip input[type="date"]{font-family:inherit; font-size:.82rem; font-weight:600; color:var(--text); background:none; border:0; padding:0; min-width:0;}
+.sv-chip input[type="date"]:focus{outline:none;}
+[data-theme="dark"] .sv-chip input[type="date"]{color-scheme:dark;}
+.sv-clear{border:0; background:none; color:var(--text-faint); font-size:.95rem; line-height:1; cursor:pointer; padding:0 2px;}
+.sv-toggle{align-self:flex-start; border:0; background:none; color:var(--text-dim); font-family:inherit; font-size:.82rem; font-weight:650; padding:2px 0; cursor:pointer;}
+.sv-breakdown{border-radius:20px; background:var(--inset-1); box-shadow:inset 0 0 0 1px var(--hairline); overflow:hidden;}
+.sv-row{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 12px; padding:11px 14px; position:relative; font-size:.86rem;}
+.sv-row + .sv-row::before{content:''; position:absolute; top:0; left:14px; right:0; height:.5px; background:var(--hairline);}
+.sv-row .n{font-weight:620; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.sv-row .m{grid-column:1; font-size:.76rem; color:var(--text-dim);}
+.sv-row .r{grid-row:1 / span 2; grid-column:2; align-self:center; text-align:right; font-weight:680; white-space:nowrap;}
+.sv-row.total .n, .sv-row.total .r{font-weight:800;}
+.sv-row.funds .r{color:var(--teal);}
+.sv-note{font-size:.74rem; color:var(--text-faint);}
+</style>
 </head>
 <body>
 
@@ -570,6 +603,26 @@ body, .glass, .glass::after{transition:none;}
   </div>
 
   <div id="tab-loans" style="display:none;">
+    <section id="savings-section">
+      <div class="savings-card glass" id="savings-card">
+        <div class="sv-head">
+          <div>
+            <div class="sv-label">Save each day</div>
+            <div class="sv-amount"><span id="sv-amount">₱0</span><small>/day</small></div>
+          </div>
+          <div class="sv-week" id="sv-week-wrap"><span>per week</span><b id="sv-week">₱0</b></div>
+        </div>
+        <div class="sv-sub" id="sv-sub"></div>
+        <div class="sv-alert" id="sv-overdue" hidden></div>
+        <div class="sv-controls">
+          <label class="sv-chip"><input type="checkbox" id="sv-funds"><span class="sv-track"></span>Count wallet funds</label>
+          <label class="sv-chip" style="padding-left:12px;">Debt-free by <input type="date" id="sv-target" aria-label="Debt-free target date"><button type="button" class="sv-clear" id="sv-clear" aria-label="Clear target date" hidden>×</button></label>
+        </div>
+        <button type="button" class="sv-toggle" id="sv-toggle" hidden>Show breakdown ▾</button>
+        <div class="sv-breakdown" id="sv-breakdown" hidden></div>
+        <div class="sv-note" id="sv-note" hidden></div>
+      </div>
+    </section>
     <div class="content-grid">
       <div class="col-left">
 
@@ -1150,7 +1203,88 @@ body, .glass, .glass::after{transition:none;}
     body.innerHTML = rows;
   }
 
+  /* ---------- daily savings target ---------- */
+  var SV_KEY = 'ledgerapp_savings_v1', svOpen = false;
+  function svAll(){ try{ return JSON.parse(localStorage.getItem(SV_KEY) || '{}'); }catch(e){ return {}; } }
+  function svLoad(){ var s = svAll()[index.activeId]; return s || {useFunds:true, target:''}; }
+  function svSave(s){ var all = svAll(); all[index.activeId] = s; try{ localStorage.setItem(SV_KEY, JSON.stringify(all)); }catch(e){} }
+  function pesoUp(n){ return '₱' + Math.ceil(Math.max(0, n)).toLocaleString(); }
+  function longDate(d){ return d.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'}); }
+  function renderSavings(){
+    if(!document.getElementById('sv-amount')) return;
+    var s = svLoad();
+    document.getElementById('sv-funds').checked = !!s.useFunds;
+    document.getElementById('sv-target').value = s.target || '';
+    document.getElementById('sv-clear').hidden = !s.target;
+    var t = today(), items = [], overdue = 0, ongoing = 0, extra = 0;
+    loans.forEach(function(l){
+      if(Number(l.extraCharged) > 0) extra += Number(l.extraCharged);
+      if(!hasTerm(l)){ ongoing++; return; }
+      for(var k = Number(l.paid)||0; k < Number(l.term); k++){
+        var d = dueDateForCycle(l, k), amt = Number(l.amount)||0;
+        if(d < t) overdue += amt; else items.push({loan:l, date:d, amt:amt});
+      }
+    });
+    items.sort(function(a,b){ return a.date - b.date; });
+    var funds = s.useFunds ? walletTotal() : 0;
+    var F = Math.max(0, funds - overdue);
+    var target = s.target ? parseDate(s.target) : null;
+    if(target && target <= t) target = null;
+    var total = items.reduce(function(a,it){ return a + it.amt; }, 0), cum = 0, deadlines = [];
+    items.forEach(function(it){ if(target && it.date > target) return; cum += it.amt; deadlines.push({date:it.date, cum:cum}); });
+    if(target && items.length) deadlines.push({date:target, cum:total, isTarget:true});
+    var best = null;
+    deadlines.forEach(function(dl){ var days = Math.max(1, daysUntil(dl.date)), r = (dl.cum - F)/days; if(!best || r > best.rate) best = {rate:r, date:dl.date, cum:dl.cum, days:days, isTarget:dl.isTarget}; });
+    var rate = best ? Math.max(0, best.rate) : 0;
+    var amtEl = document.getElementById('sv-amount'), sub = document.getElementById('sv-sub');
+    var toggle = document.getElementById('sv-toggle'), bd = document.getElementById('sv-breakdown');
+    document.getElementById('sv-week').textContent = pesoUp(rate*7);
+    var od = document.getElementById('sv-overdue');
+    od.hidden = overdue <= 0;
+    if(overdue > 0) od.textContent = '₱' + peso(overdue) + ' is overdue. Pay it now' + (s.useFunds && funds >= overdue ? ' — your wallet funds cover it.' : '.');
+    if(!items.length){
+      amtEl.textContent = '₱0';
+      sub.textContent = overdue > 0 ? 'Nothing else scheduled after the overdue payments.' : 'Add a loan with a set number of payments to see your daily target.';
+      toggle.hidden = true; bd.hidden = true;
+    } else if(rate <= 0){
+      amtEl.textContent = '₱0';
+      sub.textContent = 'Your wallet funds already cover every payment' + (target ? ' up to ' + longDate(target) + '.' : '.');
+      toggle.hidden = true; bd.hidden = true;
+    } else {
+      amtEl.textContent = pesoUp(rate);
+      var last = items[items.length-1].date;
+      sub.textContent = best.isTarget
+        ? 'Pays off ₱' + peso(total) + ' by ' + longDate(target) + '.'
+        : 'Your tightest deadline: ₱' + peso(best.cum) + ' due by ' + shortDate(best.date) + '. ' + (target ? 'On track to be debt-free by ' + longDate(target) + '.' : 'Covers every payment through ' + longDate(last) + '.');
+      toggle.hidden = false;
+      toggle.textContent = svOpen ? 'Hide breakdown ▴' : 'Show breakdown ▾';
+      bd.hidden = !svOpen;
+      if(svOpen){
+        var per = {}, order = [];
+        items.forEach(function(it){ if(it.date > best.date && !best.isTarget) return; if(target && best.isTarget && it.date > target && false) return;
+          var id = it.loan.id; if(!per[id]){ per[id] = {loan:it.loan, amt:0, n:0, last:it.date}; order.push(id); } per[id].amt += it.amt; per[id].n++; per[id].last = it.date; });
+        var rows = order.map(function(id){ var p = per[id];
+          return '<div class="sv-row"><div class="n">'+escapeHtml(p.loan.name)+'</div><div class="m">₱'+peso(p.amt)+' · '+p.n+' payment'+(p.n>1?'s':'')+' by '+shortDate(p.last)+'</div><div class="r">₱'+peso(p.amt/best.days)+'/day</div></div>'; }).join('');
+        var used = Math.min(F, best.cum);
+        if(used > 0) rows += '<div class="sv-row funds"><div class="n">Wallet funds</div><div class="m">₱'+peso(used)+' already saved</div><div class="r">−₱'+peso(used/best.days)+'/day</div></div>';
+        rows += '<div class="sv-row total"><div class="n">Save each day</div><div class="m">for '+best.days+' day'+(best.days>1?'s':'')+', until '+shortDate(best.date)+'</div><div class="r">'+pesoUp(rate)+'/day</div></div>';
+        bd.innerHTML = rows;
+      }
+    }
+    var notes = [];
+    if(ongoing) notes.push(ongoing + ' ongoing loan' + (ongoing>1?'s':'') + ' (no end date)');
+    if(extra > 0) notes.push('₱' + peso(extra) + ' in charged expenses');
+    var note = document.getElementById('sv-note');
+    note.hidden = !notes.length;
+    note.textContent = notes.length ? 'Not included: ' + notes.join(' and ') + '.' : '';
+  }
+  document.getElementById('sv-funds').addEventListener('change', function(e){ var s = svLoad(); s.useFunds = e.target.checked; svSave(s); renderSavings(); });
+  document.getElementById('sv-target').addEventListener('change', function(e){ var s = svLoad(); s.target = e.target.value; svSave(s); renderSavings(); });
+  document.getElementById('sv-clear').addEventListener('click', function(e){ e.preventDefault(); var s = svLoad(); s.target = ''; svSave(s); renderSavings(); });
+  document.getElementById('sv-toggle').addEventListener('click', function(){ svOpen = !svOpen; renderSavings(); });
+
   function renderAll(){
+    renderSavings();
     renderStats(); renderCalendar(); renderDueList(); renderLoanList(); renderBreakdown();
     renderWallets(); renderActivity(); renderLedgerSwitcherLabel();
   }

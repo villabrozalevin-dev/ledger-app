@@ -1,11 +1,12 @@
-var CACHE = 'ledger-app-v5';
+var CACHE = 'ledger-app-v7';
 var ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/icon-512-maskable.png'
+  './icons/icon-512-maskable.png',
+  './icons/apple-touch-icon.png'
 ];
 // Optional files: a missing one must never block the update.
 var EXTRAS = [
